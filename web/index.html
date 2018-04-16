@@ -21,7 +21,7 @@
 	    ws.onerror = _onerror;
 		
 		function ws_send(msg) {
-		    if (this.ws.readyState != WebSocket.OPEN)
+		    if (ws.readyState != WebSocket.OPEN)
 			    return;
 		
     		console.log("___ ws send\n");
@@ -50,9 +50,6 @@
 
          function _onerror(evt) {
         	console.log("___ onerror");
-            //write_scr('<span style="color: red;">ERROR:</span> '+ evt.data);
-            
-            
             
         };
         
