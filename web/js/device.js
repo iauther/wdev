@@ -1,28 +1,37 @@
 
 var Device=(function() {
-    var __proto=Device.prototype;
+    var _proto=Device.prototype;
     
-    __proto.i2c=function(speed) {
-        
+    _proto.i2c=function(speed) {
+        var __proto=_proto.i2c.prototype;
     }
     
-    __proto.i2s=function(n,hl) {
-        
+    _proto.i2s=function(n,hl) {
+        var __proto=_proto.i2s.prototype;
     }
     
-    __proto.spi=function(mode,speed) {
-        
+    _proto.spi=function(mode,speed) {
+        var __proto=_proto.spi.prototype;
     }
     
-    __proto.usb=function() {
-        
+    _proto.usb=function() {
+        var __proto=_proto.usb.prototype;
     }
     
-    __proto.gpio=function(n,hl) {
-        
+    _proto.gpio=function(n,hl) {
+        var __proto=_proto.gpio.prototype;
     }
     
-    __proto.inet=function(url,port) {
+    _proto.inet=function(url,port) {
+        var __proto=_proto.inet.prototype;
+        
+        __proto.connect=function() {
+            
+        }
+        
+        __proto.connect=function() {
+            
+        }
         
     }
 })
