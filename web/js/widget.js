@@ -1,5 +1,6 @@
 
 var Widget=(function() {
+    var _proto=Widget.prototype;
     
     var STAGE       = Laya.Stage;
     var EVENT       = Laya.Event;
@@ -50,98 +51,96 @@ var Widget=(function() {
 	Stage.screenMode = STAGE.SCREEN_HORIZONTAL;//STAGE.SCREEN_VERTICAL;
 	Stage.bgColor = "#232628";
     
-    this.Line=function() {
+    _proto.Line=function() {
         
     }
     
-    this.Rect=function() {
+    _proto.Rect=function() {
         
     }
     
-    this.Circle=function() {
+    _proto.Circle=function() {
         
     }
     
-    this.Ring=function() {
+    _proto.Ring=function() {
         
     }
 
-    this.Tips=function() {
+    _proto.Tips=function() {
         
     }
 
-    this.Progress=function() {
+    _proto.Progress=function() {
         
     }
 
-    this.ListBox=function() {
+    _proto.ListBox=function() {
         
     }
     
-    this.Tree=function() {
+    _proto.Tree=function() {
         
     }
     
-    this.Scroller=function() {
+    _proto.Scroller=function() {
         
     }
     
-    this.CheckBox=function() {
+    _proto.CheckBox=function() {
         
     }
     
-    this.ComboBox=function() {
+    _proto.ComboBox=function() {
         
     }
     
-    this.Menu=function() {
+    _proto.Menu=function() {
         
     }
     
-    this.Table=function() {
+    _proto.Table=function() {
         
     }
 
-    this.Button=function() {
+    _proto.Button=function() {
         
     }
 
-    this.Select=function() {
+    _proto.Select=function() {
         
     }
 
-    this.MultiSelect=function() {
+    _proto.MultiSelect=function() {
         
     }
 
-    this.Slider=function () {
+    _proto.Slider=function () {
         
     }
 
-    this.Text=function() {
+    _proto.Text=function() {
         
     }
 
-    this.Label=function() {
+    _proto.Label=function() {
         
     }
 
-    this.TextArea=function() {
+    _proto.TextArea=function() {
         
     }
 
-    this.Dialog=function() {
+    _proto.Dialog=function() {
         
     }
     
-    this.Window=function() {
+    _proto.Window=function() {
         
     }
     
     //Stage.addChild(btn);
-    
-    
-})
+})()
 
 
 

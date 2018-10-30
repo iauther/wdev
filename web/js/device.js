@@ -34,7 +34,7 @@ var Device=(function() {
         }
         
     }
-})
+})()
 
 
 
