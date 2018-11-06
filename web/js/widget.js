@@ -3,6 +3,24 @@
  *  chengdu/sichuan/china. iauther@163.com
  *  2018/11/3 16:08:28
 */
+function object(o)
+{
+    function F(){};
+    F.prototype=o;
+    return new F();
+}
+function inherit(sup,sub)
+{
+    var p=object(sup.prototype); //创建父类原型的一个副本 等同于使用Object.create(superType.prototype)
+    p.constructor=sub;            //为副本添加constructor属性,弥补重写原型而失去的constructor属性
+    sub.prototype=p;              //将创建的对象(副本)赋值给子类的原型
+}
+
+function Pot(x,y)
+{
+   this.x = x;
+   this.y = y; 
+}
 
 function Area(x,y,w,h)
 {
@@ -128,31 +146,55 @@ var Widget=(function() {
     Stage.alignH = STAGE.ALIGN_CENTER;
 	Stage.scaleMode = STAGE.SCALE_SHOWALL;
 	Stage.screenMode = STAGE.SCREEN_HORIZONTAL;//STAGE.SCREEN_VERTICAL;
-	Stage.bgColor = "#232628";
+	//Stage.bgColor = "#907928";
     
-    _proto.Line=function() {
+    _proto.Line=function(pot1,pot2,linecolor,linewidth) {
+        var sp=new Sprite();
         
+        sp.graphics.drawLine(pot1.x, pot1.y, pot2.x, pot2.y, linecolor, linewidth);
+        parent.addChild(sp);
+        
+        return sp; 
     }
     
-    _proto.Rect=function() {
+    _proto.Rect=function(parent,area,linecolor,fillcolor,linewidth,roundradius) {
+        var sp=new Sprite();
         
+        sp.graphics.drawLine(pot1.x, pot1.y, pot2.x, pot2.y, linecolor, linewidth);
+        parent.addChild(sp);
+        
+        return sp;
     }
     
-    _proto.Circle=function() {
+    _proto.Circle=function(pot,radius,fillcolor,linecolor,linewidth) {
+        var sp=new Sprite();
         
+        sp.graphics.drawCircle(pot.x,pot.y,radius,fillcolor,linecolor,linewidth);
+        parent.addChild(sp);
+        
+        return sp;
     }
 
     _proto.Tips=function() {
         
     }
 
-    _proto.Progress=function() {
+    _proto.Progress=function(parent,area,skin) {
+        //sub=_proto.Progress;
+        //sup=ProgressBar;
+        //sup.call(this, skin);
+        var pb=new ProgressBar(skin);
         
-    }
-    
-    _proto.Box=function() {
-        
-    }
+		pb.x = area.x;
+		pb.y = area.y;
+		pb.width = area.w;
+
+		//pb.sizeGrid = "5,5,5,5";
+		//pb.changeHandler = new Handler(this, onChange);
+		//inherit(sup, sub);
+		
+		//this.on
+    }   
     
     _proto.ListBox=function() {
         
@@ -179,19 +221,17 @@ var Widget=(function() {
     }
     
     _proto.Button=function(parent,area,txt,skin) {
-        var btn = new Button(skin);
+        var bt = new Button(skin);
         
-        btn.pos(area.x, area.y);
-        btn.size(area.w, area.h);
+        bt.pos(area.x, area.y);
+        bt.size(area.w, area.h);
         
-        parent.addChild(hs);
+        parent.addChild(bt);
+        
+        return bt;
     }
 
-    _proto.Select=function() {
-        
-    }
-
-    _proto.MultiSelect=function() {
+    _proto.Selecter=function(parent,area,sel,multi) {
         
     }
 

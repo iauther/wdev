@@ -68,12 +68,12 @@ function myUpgrade(area,txt,data)
 
 
 var scr=(function myScr() {
-    var i;
+    var i,data;
     var st=Laya.stage;
     
-    this.tt = new myTitle(st, Area(0,0,0,0), );
-    this.mn = new myMenu(stArea(0,0,0,0), );
-    this.et = new myEdit(stArea(0,0,0,0), );
-    this.ug = new myUpgrade(stArea(0,0,0,0), );
+    this.tt = new myTitle(st,   Area(200,200,600,400), data);
+    //this.mn = new myMenu(st,    Area(0,0,0,0), data);
+    //this.et = new myEdit(st,    Area(0,0,0,0), data);
+    //this.ug = new myUpgrade(st, Area(0,0,0,0), data);
     
 })()
