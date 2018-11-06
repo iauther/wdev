@@ -71,6 +71,29 @@ var Device=(function() {
     _proto.ws=function(url,port) {
         var __proto=_proto.ws.prototype;
         
+        this.open=function() {
+            new WebSocket(url+port);
+        }
+        
+        this.close=function() {
+            new WebSocket(url+port);
+        }
+        
+        this.send=function(data) {
+            if (data instanceof ArrayBuffer) {
+                
+            }
+        }
+        
+        this.onread=function(data) {
+            if (data instanceof ArrayBuffer) {
+                
+            }
+        }
+        
+        this.onerror=function() {
+            
+        }
     
     }
     
