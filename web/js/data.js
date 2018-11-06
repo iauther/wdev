@@ -26,7 +26,6 @@ IOTYPE.WIFI=1<<tmp++;
 */
 
 
-
 var Data=(function() {
     var _proto=Data.prototype;
     

@@ -2,84 +2,28 @@
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<title>js test</title>
+	<title>demo</title>
 	<style>
 		body {margin: 0;padding: 0;background-color: #000000;}
 	</style>
+	
+	<script src="./js/main.js"></script>
+	<script src="./js/usr.js"></script>
+	<script src="./js/data.js"></script>
+	<script src="./js/laya.core.js"></script>
+	<script src="./js/laya.ui.js"></script>
+	<script src="./js/widget.js"></script>
+	<script src="./js/dsp.js"></script>
+	<script src="./js/lang.js"></script>
 </head>
 
 <body>
 	<script>
-	    
-	    var url = "192.168.2.77:9090";
-	    var ws = new Websocket(url);
-	    
-	    ws.binaryType = 'arraybuffer';
-	    ws.onopen = _onopen;
-	    ws.onclose = _onclose;
-	    ws.onmessage = _onmsg;
-	    ws.onerror = _onerror;
+		var sttt;
 		
-		function ws_send(msg) {
-		    if (ws.readyState != WebSocket.OPEN)
-			    return;
-		
-    		console.log("___ ws send\n");
-    		ws.send(msg);
-		}
-		
-		function _onopen(evt) {
-        	//ws.send("kb ws test");
-        	console.log("___ ws opened\n");
-        };
-
-        function _onclose(evt) {
-            console.log("___ ws.onclose\n");
-            //setTimeout(_reopen, 30000);
-        };
-
-	 
-        function _onmsg(evt) {
-        	
-        	if (evt.data instanceof ArrayBuffer) {
-        		var hdr = header(evt.data);
-        		console.log("___ hdr.evt: "+hdr.evt);
-        	}
-
-        };
-
-         function _onerror(evt) {
-        	console.log("___ onerror");
-            
-        };
-        
-        
-        function header(data) {
-            var tmp, len, length=0;
-            
-            len = 4;
-            tmp = new DataView(data, length, len);
-            length += len;
-            this.evt = tmp.getInt32(0,true);
-            
-            len = 4;
-            tmp = new DataView(data, length, len);
-            length += len;
-            this.flag = tmp.getInt32(0,true);
-            
-            len = 4;
-            tmp = new DataView(data, length, len);
-            length += len;
-            this.dlen = tmp.getInt32(0,true);
-            
-            //this.data = ;
-        }
 		
 
 	</script>
-
+</body>
 	
-
-
-	</body>
 </html>
