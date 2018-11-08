@@ -67,9 +67,9 @@ function myFader(parent,area,txt,data)
 {
     var sp=new Laya.Sprite();
     
-    var bt=new Laya.Button("res/img/button.png");
-    bt.pos(100, 40);
-    bt.size(60, 30);
+    var bt=new Laya.Button("./res/img/button.png","BTN0");
+    //bt.pos(100, 40);
+    //bt.size(60, 30);
     bt.on(Laya.Event.MOUSE_DOWN, bt, onDown);
     bt.on(Laya.Event.MOUSE_UP,   bt, onUp);
     sp.addChild(bt);
