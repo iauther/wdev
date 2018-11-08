@@ -1,11 +1,13 @@
 var tmp=0;
 var MAGIC=0xff338855
 
-var RW={tmp=0};
+tmp=0
+var RW={};
 RW.READ=tmp++;
 RW.WRITE=tmp++;
 
-var IOTYPE={tmp=0};
+tmp=0
+var IOTYPE={};
 IOTYPE.BT=1<<tmp++;
 IOTYPE.I2C=1<<tmp++;
 IOTYPE.I2S=1<<tmp++;
@@ -27,23 +29,17 @@ IOTYPE.WIFI=1<<tmp++;
 
 
 var Data=(function() {
-    var _proto=Data.prototype;
     
-    _proto.parse=function(type,bin,js) {
-        
-        swtich() {
-            
-        }
+    
+    this.parse=function(type,bin,js) {  
         
     }
     
-    _proto.pack=function(type,js,bin) {
-        swtich() {
-            
-        }
+    this.pack=function(type,js,bin) {
+        
     }
     
-    _proto.bind=function(obj,evt,fn) {
+    this.bind=function(obj,evt,fn) {
         
     }
     
@@ -52,7 +48,7 @@ var Data=(function() {
         this.io=IO.UART;
         this.rw=RW.READ;
         this.len=0;
-        this.data=[];
+        //this.data=[];
     }
     
 })()

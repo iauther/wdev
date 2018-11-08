@@ -12,10 +12,10 @@ var DEF=[
         tp:TYPE.TEST,
         
         st:{
-                port:u8,
-                type:u8,
-                flag:u8,
-                len :u32,
+                port:'u8',
+                type:'u8',
+                flag:'u8',
+                len :'u32',
            },
     }
 
@@ -47,8 +47,8 @@ function get_fn(rw,bin,tp)
     var fn;
     switch(tp) {
         
-          case's8'£ºfn=(rw=='r')?bin.getInt8:bin.setInt8;break;
-          case'u8'£ºfn=(rw=='r')?bin.getUint8:bin.setUint8;break;
+          case's8': fn=(rw=='r')?bin.getInt8:bin.setInt8;break;
+          case'u8': fn=(rw=='r')?bin.getUint8:bin.setUint8;break;
           case's16':fn=(rw=='r')?bin.getInt16:bin.setInt16;break;
           case'u16':fn=(rw=='r')?bin.getUint16:bin.setUint16;break;
           case's32':fn=(rw=='r')?bin.getInt32:bin.setInt32;break;
@@ -127,7 +127,8 @@ var CONV=(function(def) {
             
             return bin;
         };
+    }
         
-        return conv;
+    return conv;
 })(DEF)
 

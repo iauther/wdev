@@ -5856,26 +5856,15 @@ var RenderContext=(function(){
 		ctx.stroke();
 	}
 	
-	
-	function rad(p1,p2,r) {
-	    var xx=Math.pow(Math.abs(p1.x,p2.x),2);
-	    var yy=Math.pow(Math.abs(p1.y,p2.y),2);
-	    var rr=r*r;
-	    var l=sqrt(xx+yy-rr)/2*rr);
-	    
-	    return (l*Math.PI)/180;
-	}
-	
-	__proto.drawArc=function(point1,point2,radius,color,lineWidth){
+	__proto.arcTo=function(p1,p2,radius,color,lineWidth){
 		(lineWidth===void 0)&& (lineWidth=1);
 		Stat.drawCall++;
 		var ctx=this.ctx;
 		ctx.beginPath();
 		ctx.strokeStyle=color;
 		ctx.lineWidth=lineWidth;
-		var rd=rad(point1,point2,radius);
-		ctx.arc(x+this.x,y+this.y,rd,0,RenderContext.PI2);
-		
+		ctx.moveTo(p1.x+this.x,p1.y+this.y);
+		ctx.arcTo(p1.x+this.x,p1.y+this.y,p2.x+this.x,p2.y+this.y,radius);
 		ctx.stroke();
 	}
 	
