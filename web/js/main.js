@@ -47,34 +47,19 @@ function loadAll()
 {
     var flag=0;
     var imgs=[
-                "../res/img/button.png",
-                "../res/img/progressbar.png",
-            ]
+                "res/img/button.png",
+                "res/img/progressbar.png"
+            ];
     Laya.loader.load(imgs, Laya.Handler.create(this, onLoaded));
     
-    while(!flag);
-    
     function onLoaded() {
-		flag=1;
-		console.log("____ all loaded");
-	}
+        flag=1;
+        console.log("____ all loaded");
+    }
 }
 
 
-function myInit()
-{
-    var STAGE       = Laya.Stage;
-    var EVENT       = Laya.Event;
-    var WEBGL       = Laya.WebGL;
-    var BROWSER     = Laya.Browser;
-    
-    var Stage       = Laya.stage;
-    Laya.init(BROWSER.clientWidth, BROWSER.clientHeight, WEBGL);
-    Stage.alignV     = STAGE.ALIGN_MIDDLE;
-    Stage.alignH     = STAGE.ALIGN_CENTER;
-	Stage.scaleMode  = STAGE.SCALE_SHOWALL;
-	Stage.screenMode = STAGE.SCREEN_HORIZONTAL;
-}
+
 
 
 ////////////subedit///////////////
@@ -82,25 +67,25 @@ function myFader(parent,area,txt,data)
 {
     var sp=new Laya.Sprite();
     
-    var bt=new Laya.Button("../res/img/button.png");
-    bt.pos(20, 40);
+    var bt=new Laya.Button("res/img/button.png");
+    bt.pos(100, 40);
+    bt.size(60, 30);
     bt.on(Laya.Event.MOUSE_DOWN, bt, onDown);
     bt.on(Laya.Event.MOUSE_UP,   bt, onUp);
     sp.addChild(bt);
     
-    var hs = new Laya.HSlider("../res/img/progressbar.png");
-    hs.width = area.w/2;
-	hs.pos(20, 80);
-	hs.size(area.w/2, 30);
-	hs.min = 0;
-	hs.max = 100;
-	hs.value = 50;
-	hs.tick = 1;
-    hs.on(Laya.Event.MOUSE_DOWN, hs, onDown);
-    hs.on(Laya.Event.MOUSE_UP,   hs, onUp);
-    hs.on(Laya.Event.MOUSE_MOVE, hs, onMove);
-    sp.addChild(hs);
-    
+//  var hs=new Laya.HSlider("./res/img/progressbar.png");
+//  hs.pos(20, 80);
+//  hs.size(area.w/2, 30);
+//  hs.min=0;
+//  hs.max=100;
+//  hs.value=50;
+//  hs.tick=1;
+//  hs.on(Laya.Event.MOUSE_DOWN, hs, onDown);
+//  hs.on(Laya.Event.MOUSE_UP,   hs, onUp);
+//  hs.on(Laya.Event.MOUSE_MOVE, hs, onMove);
+//  sp.addChild(hs);
+//    
     parent.addChild(sp);
     
     function onDown() {
@@ -236,24 +221,31 @@ function myUpgrade(area,txt,data)
 
 ///////////////////////////////////////////
 
-
-
-console.log("00000000000000000000");
-(function uuu() {
-    var i,data;
+function myAll(){
+    var i;
     
-    myInit();
+    var STAGE       = Laya.Stage;
+    var EVENT       = Laya.Event;
+    var WEBGL       = Laya.WebGL;
+    var BROWSER     = Laya.Browser;
     
+    Laya.init(BROWSER.clientWidth, BROWSER.clientHeight, WEBGL);
+    Laya.stage.alignV     = STAGE.ALIGN_MIDDLE;
+    Laya.stage.alignH     = STAGE.ALIGN_CENTER;
+    Laya.stage.scaleMode  = STAGE.SCALE_SHOWALL;
+    Laya.stage.screenMode = STAGE.SCREEN_HORIZONTAL;
+    
+    loadAll();
     var st=Laya.stage;
+    
     //this.tt = new myTitle(st,   Area(200,200,600,400), data);
     //this.mn = new myMenu(st,    Area(0,0,0,0), data);
     //this.et = new myEdit(st,    Area(0,0,0,0), data);
     //this.ug = new myUpgrade(st, Area(0,0,0,0), data);
     
-    var fd = new myFader(st, Area(200,200,600,400), "fader");
-    conso
-    
-})()
+    var fd = new myFader(st,new Area(200,200,600,400),"fader");
+}
+
 
 
 
