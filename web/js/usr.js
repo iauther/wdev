@@ -12,18 +12,17 @@ var DEF=[
         tp:TYPE.TEST,
         
         st:{
-                port:'u8',
-                type:'u8',
-                flag:'u8',
-                len :'u32',
+                port:'u8.1',
+                type:'u8.1',
+                flag:'u8.1',
+                len :'u32.1',
            },
     }
 
 ];
 
-
-
-function get_tplen(tp)
+//get type len
+function get_tlen(tp)
 {
     switch(tp) {
           case's8': return 1;
@@ -42,19 +41,46 @@ function get_tplen(tp)
     }
 }
 
-function get_fn(rw,bin,tp)
+
+
+//a:attr
+function get_alen(attr)
+{
+    var s=attr.split('.');
+    var l=parseInt(s[1]);
+    switch(s[0]) {
+          case's8':
+          case'u8': return 1*l;
+          
+          case's16':
+          case'u16':return 2*l;
+          
+          case's32':
+          case'u32':
+          case'f32':return 4*l;
+          
+          case's64':
+          case'u64':
+          case'f64':return 8*l;
+          
+          default:
+          return 0;
+    }
+}
+
+function get_fn(rw,bin,attr)
 {
     var fn;
-    switch(tp) {
-        
-          case's8': fn=(rw=='r')?bin.getInt8:bin.setInt8;break;
-          case'u8': fn=(rw=='r')?bin.getUint8:bin.setUint8;break;
-          case's16':fn=(rw=='r')?bin.getInt16:bin.setInt16;break;
-          case'u16':fn=(rw=='r')?bin.getUint16:bin.setUint16;break;
-          case's32':fn=(rw=='r')?bin.getInt32:bin.setInt32;break;
-          case'u32':fn=(rw=='r')?bin.getUint32:bin.setUint32;break;
-          case's64':fn=(rw=='r')?bin.getInt64:bin.setInt64;break;
-          case'u64':fn=(rw=='r')?bin.getUint64:bin.setUint64;break;
+    var s=attr.split('.');
+    switch(s[0]) {
+          case's8' :fn=(rw=='r')?bin.getInt8:   bin.setInt8;   break;
+          case'u8' :fn=(rw=='r')?bin.getUint8:  bin.setUint8;  break;
+          case's16':fn=(rw=='r')?bin.getInt16:  bin.setInt16;  break;
+          case'u16':fn=(rw=='r')?bin.getUint16: bin.setUint16; break;
+          case's32':fn=(rw=='r')?bin.getInt32:  bin.setInt32;  break;
+          case'u32':fn=(rw=='r')?bin.getUint32: bin.setUint32; break;
+          case's64':fn=(rw=='r')?bin.getInt64:  bin.setInt64;  break;
+          case'u64':fn=(rw=='r')?bin.getUint64: bin.setUint64; break;
           case'f32':fn=(rw=='r')?bin.getFloat32:bin.setFloat32;break;
           case'f64':fn=(rw=='r')?bin.getFloat64:bin.setFloat64;break;
           
@@ -66,11 +92,13 @@ function get_fn(rw,bin,tp)
 }
 
 
+
+
 function get_stlen(st)
 {
     var len=0;
     for(var p in st) {
-        len+=get_tplen(st[p]);
+        len+=get_alen(st[p]);
     }
     
     return len;
@@ -79,29 +107,48 @@ function get_stlen(st)
 
 
 
-function bin_rw(rw,bin,offset,tp)
+function bin_rw(rw,bin,offset,attr)
 {
     var o={};
-    var dv,fn,len;
+    var dv,fn;
     dv=new DataView(bin,offset);
-    fn=get_fn(rw,dv,tp);
+    fn=get_fn(rw,dv,attr);
     o.v=fn(0,true);
-    o.l=get_tplen(tp);
+    o.l=get_alen(attr);
 
     return o;
 }
 
 
+function print_obj(obj)
+{
+    for(var i in obj) {
+        console.log(i+':'+obj[i]);
+    }
+}
+
 var CONV=(function(def) {
     
     var conv=[];
-    for(var i=0; j<def.length-1; j++) {
-        //if(obj.hasOwnProperty('type'))
-        var j=def[i].tp;
-        var st=def[i].st;
-        var stlen=get_stlen(st);
+    
+    for(var i=0; i<def.length; i++) {
         
-        //conv[i].stlen=stlen;
+        var obj=def[i];
+        //if(obj.hasOwnProperty('tp'))
+        
+        
+        var j=obj.tp;
+        var st=obj.st;
+        var sl=get_stlen(st);
+        
+        conv[j]={};
+        //copy attr
+        for(var o in st) {
+            conv[j][o]=null;
+        }
+        
+        //conv[i].sl=sl;        //struct length
+        
         //bin to js
         conv[j].b2j=function(bin) {
             var js={};
@@ -127,6 +174,12 @@ var CONV=(function(def) {
             
             return bin;
         };
+    }
+    
+    console.log("___ print obj");
+    //console.log(conv[0]);
+    for(var i=0; i<conv.length; i++) {
+        print_obj(conv[i]);
     }
         
     return conv;
