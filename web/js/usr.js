@@ -142,9 +142,10 @@ var CONV=(function(def) {
         var sl=get_stlen(st);
         
         conv[j]={};
+        conv[j].js={};
         //copy attr
         for(var o in st) {
-            conv[j][o]=null;
+            conv[j].js[o]=null;
         }
         
         //conv[i].sl=sl;        //struct length
@@ -176,11 +177,11 @@ var CONV=(function(def) {
         };
     }
     
-    console.log("___ print obj");
+    //console.log("___ print obj");
     //console.log(conv[0]);
-    for(var i=0; i<conv.length; i++) {
-        print_obj(conv[i]);
-    }
+    //for(var i=0; i<conv.length; i++) {
+    //    print_obj(conv[i]);
+    //}
         
     return conv;
 })(DEF)

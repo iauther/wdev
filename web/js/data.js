@@ -1,6 +1,6 @@
 var tmp=0;
 var MAGIC=0xff338855
-
+console.log("ggggggggggggg");
 tmp=0
 var RW={};
 RW.READ=tmp++;
@@ -27,8 +27,8 @@ IOTYPE.WIFI=1<<tmp++;
     }packet_t;
 */
 
-
-var Data=(function() {
+console.log("88888888888888888");
+function myData() {
     
     
     this.parse=function(type,bin,js) {  
@@ -43,6 +43,7 @@ var Data=(function() {
         
     }
     
+    
     function pkt_hdr() {
         this.magic=MAGIC;
         this.io=IO.UART;
@@ -51,4 +52,33 @@ var Data=(function() {
         //this.data=[];
     }
     
-})()
+    var url="192.168.2.202:8899";
+    
+    var ws=new WebSocket(url);
+    
+    
+    setInterval(send,1000);
+    
+/*   
+    port:'u8.1',
+    type:'u8.1',
+    flag:'u8.1',
+    len :'u32.1',
+*/
+console.log("9999999999999999999999");
+    var js=clone(CONV[TYPE.TEST].js);
+    function send() {
+        js.port=9;
+        js.type=8;
+        js.flag=11;
+        js.len=234;
+        
+        var bin=CONV[TYPE.TEST].j2b(js);
+        
+        ws.send(bin);
+        console.log("ws send test");
+    }
+    
+    
+    
+}
