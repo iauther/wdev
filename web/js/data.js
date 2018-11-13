@@ -32,7 +32,7 @@ TYPE.SETUP=tmp++;
 TYPE.XXX=tmp++;
 //////////////
 
-var DEF={//第1层帧头定义
+var PKT={//第1层帧头定义
     /*
             typedef struct {
                 u32 magic;
@@ -61,7 +61,7 @@ var DEF={//第1层帧头定义
                         st:{
                             gg:'s8.10.str',
                         },
-                        data:null;
+                        data:null,
                     },
                 ],
             },
@@ -81,6 +81,18 @@ var DEF={//第1层帧头定义
         ],
     },
 };
+
+var PARA={
+    
+};
+
+
+function bin_copy(bin)  {
+    var dst = new ArrayBuffer(bin.byteLength);
+    new Uint8Array(dst).set(new Uint8Array(bin));
+    return dst;
+}
+
 
 function to_bin(str){
     var bin = [];
@@ -157,10 +169,12 @@ function get_plen(p)
     }
 }
 
-function get_fn(rw,bin,attr)
+
+//暂未实现字符串,已预留作后续处理
+function get_fn(rw,bin,prop)
 {
     var fn;
-    var s=attr.split('.');
+    var s=prop.split('.');
     switch(s[0]) {
           case's8' :fn=(rw=='r')?bin.getInt8:   bin.setInt8;   break;
           case'u8' :fn=(rw=='r')?bin.getUint8:  bin.setUint8;  break;
@@ -190,14 +204,14 @@ function get_slen(s)
     return len;
 }
 
-function bin_rw(rw,bin,offset,attr)
+function bin_rw(rw,bin,offset,prop)
 {
     var o={};
     var dv,fn;
     dv=new DataView(bin,offset);
-    fn=get_fn(rw,dv,attr);
+    fn=get_fn(rw,dv,prop);
     o.v=fn(0,true);
-    o.l=get_alen(attr);
+    o.l=get_alen(prop);
 
     return o;
 }
@@ -206,7 +220,7 @@ function print_obj(obj)
 {
     for(var i in obj) {
         var pp=obj[i];
-        if(pp instaceof Array) {
+        if(pp instanceof Array) {
             if(pp.length>0) {
                 print_obj(pp)
             }
@@ -221,7 +235,7 @@ function do_recu(obj)
 {
     var cov=[],i=0;
     for(pp in obj) {
-        if(pp instaceof Array) {
+        if(pp instanceof Array) {
             if(pp.length>0) {
                 do_recu(conv,pp);
             }
@@ -271,18 +285,14 @@ function do_recu(obj)
 }
 
 ///////////////////////////////////
-var CONV=(function(def) {
-    var cnt=0;
+function mk_conv(pkt) {
     var conv=[];
-
-    var conv=do_recu(conv,def[i]);
-    for(var i=0; i<conv.length; i++) {
-        print_obj(conv[i]);
-    }
+    
+    do_recu(conv,pkt);
+    //print_obj(pkt);
         
     return conv;
-})(DEF)
-
+}
 
 //////////////////////////////////////////////////////////
 tmp=0;
@@ -292,11 +302,13 @@ WS.MESG=tmp++;
 WS.CLOSE=tmp++;
 WS.ERROR=tmp++;
 
-var Data=(function() {
-    
+var PKT_CONV=mk_conv(PKT);
+//var PAR_CONV=mk_conv(PARA);
+
+var DATA=(function() {
     
     this.JS={};
-    this.BIN=[];
+    this.BIN={};
     /////////////////////
     
     this.fn=[];
@@ -312,54 +324,60 @@ var Data=(function() {
         this.fn[e]=fn;
     }
     
-    function _open=function(url) {
+    function _open(url) {
         this._ws=new WebSocket(url);
     }
     
-    function _onmsg=function(e) {
-        _unpack();
-    }
-    
-    function _send=function(tp,js) {
-        var bin=CONV[tp].j2b(js);
-        this._ws.send(bin);
-    }
-    
-    function _close=function() {
-        this._ws.close();
-    }
-    
-    function _pack=function(js) {
-        var js=CONV[tp].b2j(e.data);
-        this.fn[tp]();
-    }
-    
-    function _unpack=function(bin) {
+    /////////////////////////////////
+    function _unpack(bin) {
         for(var i; i<CONV.length; i++) {
             var obj=CONV[i];
             
             CONV[i].b2j(e.data);
         }
         var js=CONV[tp].b2j(e.data);
-        this.fn[tp]();
+        //this.fn[tp]();    //通知界面刷新
+    }
+    function _onmsg(e) {
+        _unpack();
     }
     
-    var url="192.168.2.202:8899";
+    ///////////////////////////////
+    function _pack(js) {
+        var bin;
+        for(var i; i<CONV.length; i++) {
+            bin=CONV[tp].b2j(e.data);
+        }
+        return bin;
+    }
+    function _send(js) {
+        var bin=_pack(js);
+        this._ws.send(bin);
+    }
     
+    function _close() {
+        this._ws.close();
+    }
+    
+    
+    var url="ws://192.168.2.202:8899";
     var ws=new WebSocket(url);
-    setInterval(send,1000);
     
-    var js=clone(CONV[TYPE.TEST].js);
+    setTimeout(send, 2000);
+    
     function send() {
-        js.port=9;
-        js.type=8;
-        js.flag=11;
-        js.len=234;
-        
-        var bin=CONV[TYPE.TEST].j2b(js);
-        
-        ws.send(bin);
-        console.log("ws send test");
+        ws.send("___ ws test!");
     }
     
 }());
+
+
+
+
+
+
+
+
+
+
+
