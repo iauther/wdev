@@ -32,6 +32,45 @@ TYPE.SETUP=tmp++;
 TYPE.XXX=tmp++;
 //////////////
 
+
+var tp_vol={
+    tp:TYPE.VOL,
+    st:{
+        port:   'u8.1.num',
+        type:   'u8.1.num',
+        flag:   'u8.1.num',
+    },
+    data:null,
+};
+
+var tp_gain={
+    tp:TYPE.VOL,
+    st:{
+        value:   'u8.1.num',
+    },
+    data:null,
+};
+var tp_eq={
+    tp:TYPE.EQ,
+    st:{
+        aa: 'u8.1.num',
+        bb: 'u8.1.num',
+        cc: 'u8.1.num',
+        len:'u32.1.num',
+    },
+    data:[
+        tp_gain,
+    ],
+};
+
+var tp_setup={
+    tp:TYPE.SETUP,
+    st:{
+        cnt:'u16.1.num',
+    },
+    data:null
+};
+
 var PKT={//第1层帧头定义
     /*
             typedef struct {
@@ -47,43 +86,22 @@ var PKT={//第1层帧头定义
         io:   'u8.1.num',
         len:  'u8.1.num',
         data:[//第2层帧头定义
-            {
-                tp:TYPE.EQ,
-                st:{
-                    aa: 'u8.1.num',
-                    bb: 'u8.1.num',
-                    cc: 'u8.1.num',
-                    len:'u32.1.num',
-                },
-                data:[//第3层帧头定义
-                    {
-                        tp:TYPE.XXX,
-                        st:{
-                            gg:'s8.10.str',
-                        },
-                        data:null,
-                    },
-                ],
-            },
-            
-            {
-                tp:TYPE.VOL,
-                st:{
-                    port:   'u8.1.num',
-                    type:   'u8.1.num',
-                    flag:   'u8.1.num',
-                    len :   'u32.1.num',
-                },
-                data:null,
-            },
-            
+            tp_vol,
+            tp_eq,
+            tp_setup,
             //...
         ],
     },
 };
 
-var PARA={
+
+var tp_ch={
     
+};
+
+var PARA={
+    {tp_vol,tp_eq}[6],
+    tp_setup,
 };
 
 
@@ -108,6 +126,18 @@ function to_bin(str){
     
     return bin.join("");
 }
+
+
+function get_json(url)
+{
+    var o;
+    var xhr=new XMLHttpRequest();
+    xhr.open('GET',url,false);
+    xhr.timeout=function() {console.log("get"+url+"timeout");};
+    xhr.send(null);
+    return JSON.parse(xhr.responseText);
+}
+
 
 function get_cnt(obj){
     var tp = typeof obj;
