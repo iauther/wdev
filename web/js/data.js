@@ -363,10 +363,11 @@ var DATA=(function() {
     var url="ws://192.168.2.202:8899";
     var ws=new WebSocket(url);
     
-    setTimeout(send, 2000);
+    setInterval(send, 1000);
     
     function send() {
         ws.send("___ ws test!");
+        console.log("__send");
     }
     
 }());

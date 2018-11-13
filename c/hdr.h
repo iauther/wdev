@@ -26,7 +26,7 @@ typedef struct http_message             mg_httpmsg_t;
 
 #define LOG printf
 #define HTTP_PORT 80
-#define WS_PORT   9090
+#define WS_PORT   8899
 
 #define TTY_PATH "/dev/ttyS2"
 typedef struct

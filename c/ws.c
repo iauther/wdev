@@ -17,7 +17,7 @@ static int is_websocket(mg_conn_t *conn) {
 static int ws_proc(mg_conn_t *conn, void *data, int len)
 {
     
-    LOG("_____ ws data %s, len: %d!\n", (char *)data, len);
+    LOG("_____ %s\n", (char *)data);
     
     return 0;
 }
@@ -45,8 +45,8 @@ static void ev_handler(mg_conn_t *conn, int ev, void *ev_data)
         {
             mg_wsmsg_t *wm = (mg_wsmsg_t *)ev_data;
             
-            //LOG("_____ ws->size: %d\n", wm->size);
-            ws_proc(conn, wm->data, wm->size);
+            LOG("_____ ws->size: %d\n", wm->size);
+            //ws_proc(conn, wm->data, wm->size);
             
         }
         break;
