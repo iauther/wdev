@@ -1,1 +1,3 @@
-nix/mkfs.sh
+cd nix
+sudo ./mkfs.sh
+cd ..

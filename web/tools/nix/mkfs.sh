@@ -1,35 +1,68 @@
 IMG="web.bin"
-WEBDIR="../.."
-TODIR="~/Desktop"
+WEBSRC="../.."
+WEBTMP="./web"
+IMGDIR="/tmp/_img_"
+CPDIR="~/Desktop"
+
+LIB=laya
 
 
-function pack_web() {
-    cp -r $1/js
+
+mangle_js() {
+    jss=
+    dirs=$WEBTMP/js $WEBTMP/js/lib/$LIB
+    for i in $dirs; do
+        echo i
+    done
+#    uglifyjs inet.js -m -o inet.min.js
 }
 
-function copy_web() {
-    cp -r $1/js
+copy_to_tmp() {
+    mkdir -p $WEBTMP/js/lib
+    
+    cp -ruf $1/res   $WEBTMP/
+    cp -uf  $1/js/*  $WEBTMP/js/
+    cp -ruf $1/js/lib/$LIB $WEBTMP/js/lib/
+}
+
+copy_to_img() {
+    cp -ruf $WEBTMP/* $WEBTMP/
 }
 
 
 #make img file
-if [ ! -f $IMG ];then
-    dd if=/dev/zero of=$IMG bs=1M count=2
-    mkfs.vfat F 32 -n "web" $IMG
-fi
+make_img() {
+    if [ ! -f $IMG ];then
+        echo "create $IMG"
+        dd if=/dev/zero of=$IMG bs=1M count=2
+        mkfs.vfat -F 32 -n "web" $IMG
+    fi
+}
 
 #copy web files to img
-if [ -f $IMG ];then
-    tmp=/tmp/_img_
-    mkdir -p $tmp
-    mount $img $tmp
-    if [ $? -eq 0 ];then
-    copy_web $WEBDIR $tmp
-    umount $tmp
-    else
-    echo "mount $img failed"
+update_img() {
+    if [ -f $IMG ];then
+        mkdir -p $IMGDIR
+        mount -t vfat $IMG $IMGDIR
+        if [ $? -eq 0 ];then
+        #gulp_web
+        rm -rf $IMGDIR
+        copy_to_img
+        umount $tmp
+        else
+        echo "mount $img failed"
+        fi
     fi
-fi
+}
 
-#copy img to goal dir
-#cp $IMG $TODIR/
+clear_all() {
+    rm -rf $WEBTMP
+}
+
+
+#process flow ...
+copy_to_tmp
+mangle_js
+make_img
+update_img
+clear_all
