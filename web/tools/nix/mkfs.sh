@@ -1,18 +1,17 @@
 IMG="web.bin"
-WEBSRC="../.."
-WEBTMP="./web"
+WEBDIR="../.."
 IMGDIR="/tmp/_img_"
 SINGLE="single.js"
 CPDIR="~/Desktop"
 
-LIB=laya
+LIB="laya"
 
 
 
 mangle_js() {
     fs=""
-    js1=$WEBTMP/js/lib/$LIB
-    js2=$WEBTMP/js
+    js1=$WEBDIR/js/lib/$LIB
+    js2=$WEBDIR/js
  
     for i in $js1/*; do
         fs=$fs" $i"
@@ -24,25 +23,27 @@ mangle_js() {
         fi
     done
     
-    echo $fs
-    #rm $WEBTMP/$SINGLE
+    #source nodejs env
     . /etc/profile
-    uglifyjs -V
     opt="-m -c"
-    uglifyjs $opt -o $WEBTMP/$SINGLE $fs
+    uglifyjs $opt -o $WEBDIR/$SINGLE $fs
 }
 
 copy_to_tmp() {
-    mkdir -p $WEBTMP/js/lib
     
-    cp -uf  $WEBSRC/*     $WEBTMP/
-    cp -ruf $WEBSRC/res   $WEBTMP/
-    cp -uf  $WEBSRC/js/*  $WEBTMP/js/
-    cp -ruf $WEBSRC/js/lib/$LIB $WEBTMP/js/lib/
+    
+    cp -uf  $WEBDIR/*     $WEBTMP/
+    cp -ruf $WEBDIR/res   $WEBTMP/
+    cp -uf  $WEBDIR/js/*  $WEBTMP/js/
+    cp -ruf $WEBDIR/js/lib/$LIB $WEBTMP/js/lib/
 }
 
 copy_to_img() {
-    cp -ruf $WEBTMP/* $WEBTMP/
+    rm -rf $IMGDIR/*
+    mkdir -p $IMGDIR/js/lib
+    
+    cp -uf  $WEBDIR/*     $IMGDIR/
+    cp -ruf $WEBDIR/res   $WEBTMP/
 }
 
 
@@ -61,8 +62,6 @@ update_img() {
         mkdir -p $IMGDIR
         mount -t vfat $IMG $IMGDIR
         if [ $? -eq 0 ];then
-        #gulp_web
-        rm -rf $IMGDIR
         copy_to_img
         umount $tmp
         else
@@ -71,14 +70,8 @@ update_img() {
     fi
 }
 
-clear_all() {
-    rm -rf $WEBTMP
-}
-
 
 #process flow ...
-clear_all
-copy_to_tmp
 mangle_js
 #make_img
 #update_img

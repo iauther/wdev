@@ -21,7 +21,8 @@ IO.WIFI=1<<tmp++;
 /////////////////////////////////////
 tmp=0;
 var TYPE=[];
-TYPE.XHDR=tmp++;
+TYPE.PKT=tmp++;
+TYPE.PARA=tmp++;
 ///////////////
 TYPE.EQ=tmp++;
 TYPE.DYN=tmp++;
@@ -80,7 +81,7 @@ var PKT={//第1层帧头定义
                 u8  data[];
             }packet_t;
     */
-    tp:TYPE.XHDR,
+    tp:TYPE.PKT,
     st:{
         magic:'u8.1.num',    //port:'u8.1.str'
         io:   'u8.1.num',
@@ -95,13 +96,25 @@ var PKT={//第1层帧头定义
 };
 
 
-var tp_ch={
-    
-};
-
 var PARA={
-    {tp_vol,tp_eq}[6],
-    tp_setup,
+    /*
+            typedef struct {
+                u32 magic;
+                u8  iotype;
+                u32 len;
+                u8  data[];
+            }packet_t;
+    */
+    tp:TYPE.PARA,
+    st:{
+        ver:'u8.1.num',    //port:'u8.1.str'
+        data:[//第2层帧头定义
+            tp_vol,
+            tp_eq,
+            tp_setup,
+            //...
+        ],
+    },
 };
 
 
