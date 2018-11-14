@@ -2,6 +2,7 @@ IMG="web.bin"
 WEBSRC="../.."
 WEBTMP="./web"
 IMGDIR="/tmp/_img_"
+SINGLE="single.js"
 CPDIR="~/Desktop"
 
 LIB=laya
@@ -9,20 +10,35 @@ LIB=laya
 
 
 mangle_js() {
-    jss=
-    dirs=$WEBTMP/js $WEBTMP/js/lib/$LIB
-    for i in $dirs; do
-        echo i
+    fs=""
+    js1=$WEBTMP/js/lib/$LIB
+    js2=$WEBTMP/js
+ 
+    for i in $js1/*; do
+        fs=$fs" $i"
     done
-#    uglifyjs inet.js -m -o inet.min.js
+    
+    for i in $js2/*; do
+        if [ -f $i ]; then
+            fs=$fs" $i"
+        fi
+    done
+    
+    echo $fs
+    #rm $WEBTMP/$SINGLE
+    . /etc/profile
+    uglifyjs -V
+    opt="-m -c"
+    uglifyjs $opt -o $WEBTMP/$SINGLE $fs
 }
 
 copy_to_tmp() {
     mkdir -p $WEBTMP/js/lib
     
-    cp -ruf $1/res   $WEBTMP/
-    cp -uf  $1/js/*  $WEBTMP/js/
-    cp -ruf $1/js/lib/$LIB $WEBTMP/js/lib/
+    cp -uf  $WEBSRC/*     $WEBTMP/
+    cp -ruf $WEBSRC/res   $WEBTMP/
+    cp -uf  $WEBSRC/js/*  $WEBTMP/js/
+    cp -ruf $WEBSRC/js/lib/$LIB $WEBTMP/js/lib/
 }
 
 copy_to_img() {
@@ -61,8 +77,8 @@ clear_all() {
 
 
 #process flow ...
+clear_all
 copy_to_tmp
 mangle_js
-make_img
-update_img
-clear_all
+#make_img
+#update_img
