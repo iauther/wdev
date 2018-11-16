@@ -1,7 +1,9 @@
 IMG="web.bin"
-WEBDIR="../.."
+WEBDIR=".."
+TMPDIR="./tmp"
 IMGDIR="/tmp/_img_"
 SINGLE="single.js"
+IMGSIZE=2097152
 CPDIR="~/Desktop"
 
 LIB="laya"
@@ -23,41 +25,43 @@ mangle_js() {
         fi
     done
     
-    #source nodejs env
-    . /etc/profile
-    opt="-m -c"
-    uglifyjs $opt -o $WEBDIR/$SINGLE $fs
+    echo "mangle now ..."
+    uglifyjs -m -c -o $WEBDIR/$SINGLE $fs
+    echo "mangle finished ..."
 }
 
 copy_to_tmp() {
     
+    rm -rf  $TMPDIR
+    mkdir -p $TMPDIR
     
-    cp -uf  $WEBDIR/*     $WEBTMP/
-    cp -ruf $WEBDIR/res   $WEBTMP/
-    cp -uf  $WEBDIR/js/*  $WEBTMP/js/
-    cp -ruf $WEBDIR/js/lib/$LIB $WEBTMP/js/lib/
-}
-
-copy_to_img() {
-    rm -rf $IMGDIR/*
-    mkdir -p $IMGDIR/js/lib
-    
-    cp -uf  $WEBDIR/*     $IMGDIR/
-    cp -ruf $WEBDIR/res   $WEBTMP/
+    cp $WEBDIR/* $TMPDIR
+    cp -r $WEBDIR/res $TMPDIR/
 }
 
 
 #make img file
-make_img() {
+make_img1() {
+    rm $IMG
+    ./fat -c $TMPDIR -s $IMGSIZE $IMG
+}
+
+
+#copy web files to img
+copy_to_img() {
+    rm -rf $IMGDIR/*
+    mkdir -p $IMGDIR/js/lib
+    
+    cp -ruf  $TMPDIR/*     $IMGDIR/
+}
+make_img2() {
+    
     if [ ! -f $IMG ];then
         echo "create $IMG"
         dd if=/dev/zero of=$IMG bs=1M count=2
         mkfs.vfat -F 32 -n "web" $IMG
     fi
-}
-
-#copy web files to img
-update_img() {
+    
     if [ -f $IMG ];then
         mkdir -p $IMGDIR
         mount -t vfat $IMG $IMGDIR
@@ -73,5 +77,6 @@ update_img() {
 
 #process flow ...
 mangle_js
-#make_img
+copy_to_tmp
+make_img1
 #update_img
