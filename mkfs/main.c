@@ -39,24 +39,23 @@ static const char *fatfs_error_to_string(FRESULT err)
 
 int main(int argc, char **argv)
 {
-    int fd;
+    int i=0,fd;
     char b[4096];
+    char buf[512]={0};
     FATFS fs;
 
-    int fno = open("abc.dat", O_CREAT|O_SYNC|O_RDWR, S_IRUSR|S_IWUSR);
-    printf("fno = %d\n", fno);
-    int i = 0;
-    char buf[512]={0};
+    fd = open("./web.bin", O_CREAT|O_SYNC|O_RDWR, S_IRUSR|S_IWUSR);
+    printf("fno = %d\n", fd);
     while (i < SECCOUNT) {
         //printf("size = %ld\n", write(fno, buf, 512));
-        write(fno, buf, 512);
-    i++;
+        write(fd, buf, sizeof(buf));
+        i++;
     }
-    close(fno);
-    fno = -1;
+    close(fd);
+    
     //  f_mount(&fs, "", 0); 
     //  f_mkfs("", FM_FAT, 2*512, b, 4096);
-    FCHK(f_mkfs("", FM_SFD|FM_FAT, 0, b, 4096));
+    FCHK(f_mkfs("", FM_SFD|FM_FAT32, 0, b, 4096));
     
     
     
