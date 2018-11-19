@@ -10,13 +10,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "ff.h"			/* Obtains integer types */
-#include "diskio.h"		/* Declarations of disk functions */
+#include "ffconf.h"
+#include "diskio.h"		/* FatFs lower layer API */
 
 /* Definitions of physical drive number for each drive */
 #define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
 #define DEV_MMC		1	/* Example: Map MMC/SD card to physical drive 1 */
 #define DEV_USB		2	/* Example: Map USB MSD to physical drive 2 */
+
 
 
 /*-----------------------------------------------------------------------*/
@@ -30,67 +31,27 @@ DSTATUS disk_status (
 	DSTATUS stat;
 	int result;
 
-	switch (pdrv) {
-	case DEV_RAM :
-		result = RAM_disk_status();
 
-		// translate the reslut code here
-
-		return stat;
-
-	case DEV_MMC :
-		result = MMC_disk_status();
-
-		// translate the reslut code here
-
-		return stat;
-
-	case DEV_USB :
-		result = USB_disk_status();
-
-		// translate the reslut code here
-
-		return stat;
-	}
-	return STA_NOINIT;
+	return 0;
 }
+
 
 
 
 /*-----------------------------------------------------------------------*/
 /* Inidialize a Drive                                                    */
 /*-----------------------------------------------------------------------*/
+int fno=-1;
 
 DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-	DSTATUS stat;
-	int result;
-
-	switch (pdrv) {
-	case DEV_RAM :
-		result = RAM_disk_initialize();
-
-		// translate the reslut code here
-
-		return stat;
-
-	case DEV_MMC :
-		result = MMC_disk_initialize();
-
-		// translate the reslut code here
-
-		return stat;
-
-	case DEV_USB :
-		result = USB_disk_initialize();
-
-		// translate the reslut code here
-
-		return stat;
-	}
-	return STA_NOINIT;
+  printf("disk_initialize\n");
+  if (fno == -1)
+    fno = open("abc.dat", O_SYNC|O_RDWR, S_IRUSR|S_IWUSR);
+  lseek(fno, 0, SEEK_SET);
+  return RES_OK;
 }
 
 
@@ -109,36 +70,11 @@ DRESULT disk_read (
 	DRESULT res;
 	int result;
 
-	switch (pdrv) {
-	case DEV_RAM :
-		// translate the arguments here
+	printf("disk_read %d %ld %d\n", fno, sector, count);
+	lseek(fno, sector*512, SEEK_SET);
+	read(fno, buff, 512*count);
 
-		result = RAM_disk_read(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-
-	case DEV_MMC :
-		// translate the arguments here
-
-		result = MMC_disk_read(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-
-	case DEV_USB :
-		// translate the arguments here
-
-		result = USB_disk_read(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-	}
-
-	return RES_PARERR;
+	return RES_OK;
 }
 
 
@@ -146,8 +82,6 @@ DRESULT disk_read (
 /*-----------------------------------------------------------------------*/
 /* Write Sector(s)                                                       */
 /*-----------------------------------------------------------------------*/
-
-#if FF_FS_READONLY == 0
 
 DRESULT disk_write (
 	BYTE pdrv,			/* Physical drive nmuber to identify the drive */
@@ -158,40 +92,12 @@ DRESULT disk_write (
 {
 	DRESULT res;
 	int result;
-
-	switch (pdrv) {
-	case DEV_RAM :
-		// translate the arguments here
-
-		result = RAM_disk_write(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-
-	case DEV_MMC :
-		// translate the arguments here
-
-		result = MMC_disk_write(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-
-	case DEV_USB :
-		// translate the arguments here
-
-		result = USB_disk_write(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-	}
-
-	return RES_PARERR;
+	printf("disk_write %d %ld %d\n", fno, sector, count);	
+	lseek(fno, sector*512, SEEK_SET);
+	write(fno, buff, 512*count);
+	return RES_OK;
 }
 
-#endif
 
 
 /*-----------------------------------------------------------------------*/
@@ -207,26 +113,23 @@ DRESULT disk_ioctl (
 	DRESULT res;
 	int result;
 
-	switch (pdrv) {
-	case DEV_RAM :
-
-		// Process of the command for the RAM drive
-
-		return res;
-
-	case DEV_MMC :
-
-		// Process of the command for the MMC/SD card
-
-		return res;
-
-	case DEV_USB :
-
-		// Process of the command the USB drive
-
-		return res;
+	printf("disk_ioctl %d %d\n", pdrv, cmd);
+	if (cmd == 3) { // sector size
+	  *((WORD*)buff) = 512;
+	  return RES_OK;
 	}
-
+	if (cmd == 1) { // total count
+	  *((DWORD*)buff) = SECCOUNT;
+	  return RES_OK;	  
+	}
+	if (cmd == CTRL_SYNC) {
+	  return RES_OK;	  
+	}
 	return RES_PARERR;
 }
 
+
+DWORD get_fattime() { return 0; };
+
+void disk_flush() {
+}

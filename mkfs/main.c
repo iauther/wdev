@@ -32,8 +32,7 @@ static const char *fatfs_error_to_string(FRESULT err)
   }
 }
 
-/* minimum 128 */
-#define SECCOUNT 128
+
 #define FCHK(a) { FRESULT res = a; printf("call %s res %d %s\n", #a, res, fatfs_error_to_string(res)); };
 
 
@@ -41,7 +40,6 @@ static const char *fatfs_error_to_string(FRESULT err)
 int main(int argc, char **argv)
 {
     int fd;
-    int i,nfds;
     char b[4096];
     FATFS fs;
 

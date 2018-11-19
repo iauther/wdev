@@ -4,6 +4,10 @@
 
 #define FFCONF_DEF	86604	/* Revision ID */
 
+/* minimum 128 */
+#define SECCOUNT 128
+
+
 /*---------------------------------------------------------------------------/
 / Function Configurations
 /---------------------------------------------------------------------------*/
@@ -38,7 +42,7 @@
 /  f_findnext(). (0:Disable, 1:Enable 2:Enable with matching altname[] too) */
 
 
-#define FF_USE_MKFS		0
+#define FF_USE_MKFS		1
 /* This option switches f_mkfs() function. (0:Disable or 1:Enable) */
 
 
