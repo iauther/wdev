@@ -37,10 +37,10 @@ static char* my_err[FR_MAX]={
 };
 
 
-#define CHK(a,b) printf("___%s, %d, %s\n", a, b, my_err[b])
+#define CHK(a,b) printf("___%s, %s\n", a, my_err[b]);
 
 
-#define MAX_PATH 300
+#define MAX_PATH 4096
 
 typedef struct
 {
@@ -69,7 +69,7 @@ static int path_split(char *path, dn_t *dn)
 }
 
 
-static int mkimage(char *path, int len)
+static int mkimg(char *path, int len)
 {
     #define BLEN 4096
     FILE *fd;
@@ -110,7 +110,7 @@ static int f_copy(char *path)
     
     path_split(path, &dn);
     
-    printf("___file: %s\n", dn.name);
+    //printf("___file: %s\n", dn.name);
     stat(path, &st);
     if(S_ISDIR(st.st_mode)) {
         dir = opendir(path);
@@ -135,15 +135,14 @@ static int f_copy(char *path)
             fclose(fd);
             
             int wl;
-            if(f_open (&fp, dn.name, FA_CREATE_NEW|FA_WRITE)==FR_OK) {
+            printf("___name: %s\n", dn.name);
+            fr = f_open (&fp, dn.name, FA_CREATE_NEW|FA_WRITE);
+            CHK("f_open", fr); 
+            if(fr==FR_OK) {
                 printf("____ copy %s ...\n", dn.name);
                 fr = f_write(&fp, buf, st.st_size, &wl);
                 CHK("f_write", fr);
                 f_close(&fp);
-                printf("____ f_close\n");
-            }
-            else {
-                printf("____ create %s failed\n", dn.name);
             }
             
             free(buf);
@@ -151,11 +150,44 @@ static int f_copy(char *path)
     }
 }
 
-/////////////////////////////////////////
+
+static int f_scan(char *path)
+{
+    int i;
+    char *fn;
+    FDIR dir;
+    FFILE fp;
+    FRESULT fr;
+    FFILEINFO finfo;
+    char tmp[MAX_PATH];
+    
+    fr = f_opendir(&dir,(const TCHAR*)path);
+    if (fr == FR_OK) {
+        while(1) {
+            fr = f_readdir(&dir, &finfo);                   //读下一个项目
+            if (fr != FR_OK || finfo.fname[0] == 0) break;  
+            if (finfo.fname[0] == '.') continue;             
+                             
+            fn = finfo.fname;                                           
+            sprintf(tmp, "%s/%s", path, fn);
+            if (finfo.fattrib & AM_DIR) {
+               fr = f_scan(tmp);
+               if (fr != FR_OK) break;
+            }
+            else {
+               printf("%s\n", tmp);
+            }        
+        } 
+        f_closedir(&dir);
+    }     
+    
+    return 0;
+}
+
 
 #define SIZE   (2*1024*1024)
 #define LABEL   "web"
-int main(int argc, char **argv)
+static int f_mkimg()
 {
     int fd;
     char *ptr;
@@ -164,15 +196,40 @@ int main(int argc, char **argv)
     BYTE work[FF_MAX_SS];
     
     remove(IMAGE);
-    mkimage(IMAGE, SIZE);
+    mkimg(IMAGE, SIZE);
     CHK("mkfs", f_mkfs("", FM_ANY, 0, work, sizeof work));
 
     CHK("mount", f_mount(&fs, IMAGE, 0));
     CHK("setlabel", f_setlabel(LABEL));
-    /*
+    
     f_copy("./build");
     CHK("unmount", f_unmount(IMAGE));
-    */
+    
+    return 0;
+}
+
+
+static int f_print()
+{
+    FATFS fs;
+    FRESULT fr;
+    
+    CHK("mount", f_mount(&fs, IMAGE, 0));
+    f_scan("/");
+    CHK("unmount", f_unmount(IMAGE));
+    
+    return 0;
+}
+
+
+/////////////////////////////////////////
+
+
+int main(int argc, char **argv)
+{
+    f_mkimg();
+    f_print();
+    
     return 0;
 }
 
