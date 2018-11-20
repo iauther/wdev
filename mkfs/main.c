@@ -9,38 +9,37 @@
 #include "ff.h"
 
 typedef struct {
-    int     id;
-    char    *str;
-}fatfs_error_t;
+    char    *info;
+}err_t;
 
-static fatfs_error_t ffs_err[]={
-    {FR_OK,                     "Succeeded"},
-    {FR_DISK_ERR,               "A hard error occurred in the low level disk I/O layer"},
-    {FR_INT_ERR,                "Assertion failed (check for corruption)"},
-    {FR_NOT_READY,              "The physical drive cannot work"},
-    {FR_NO_FILE,                "Could not find the file"},
-    {FR_NO_PATH,                "Could not find the path"},
-    {FR_INVALID_NAME,           "The path name format is invalid"},
-    {FR_DENIED,                 "Access denied due to prohibited access or directory full"},
-    {FR_EXIST,                  "Destination file already exists"},
-    {FR_INVALID_OBJECT,         "The file/directory object is invalid"},
-    {FR_WRITE_PROTECTED,        "The physical drive is write protected"},
-    {FR_INVALID_DRIVE,          "The logical drive number is invalid"},
-    {FR_NOT_ENABLED,            "The volume has no work area"},
-    {FR_NO_FILESYSTEM,          "There is no valid FAT volume"},
-    {FR_MKFS_ABORTED,           "f_mkfs() aborted due to a parameter error. Try adjusting the partition size."},
-    {FR_TIMEOUT,                "Could not get a grant to access the volume within defined period"},
-    {FR_LOCKED,                 "The operation is rejected according to the file sharing policy"},
-    {FR_NOT_ENOUGH_CORE,        "LFN working buffer could not be allocated"},
-    {FR_TOO_MANY_OPEN_FILES,    "Number of open files > _FS_SHARE"},
-    {FR_INVALID_PARAMETER,      "Invalid parameter"},
+
+static char* my_err[FR_MAX]={
+    "Succeeded",                                                                        //FR_OK,                     
+    "A hard error occurred in the low level disk I/O layer",                            //FR_DISK_ERR,               
+    "Assertion failed (check for corruption)",                                          //FR_INT_ERR,                    
+    "The physical drive cannot work",                                                   //FR_NOT_READY,                          
+    "Could not find the file",                                                          //FR_NO_FILE,                                
+    "Could not find the path",                                                          //FR_NO_PATH,                
+    "The path name format is invalid",                                                  //FR_INVALID_NAME,           
+    "Access denied due to prohibited access or directory full",                         //FR_DENIED,                             
+    "Destination file already exists",                                                  //FR_EXIST,                  
+    "The file/directory object is invalid",                                             //FR_INVALID_OBJECT,                 
+    "The physical drive is write protected",                                            //FR_WRITE_PROTECTED,                
+    "The logical drive number is invalid",                                              //FR_INVALID_DRIVE,                      
+    "The volume has no work area",                                                      //FR_NOT_ENABLED,                                    
+    "There is no valid FAT volume",                                                     //FR_NO_FILESYSTEM,                      
+    "f_mkfs() aborted due to a parameter error. Try adjusting the partition size.",     //FR_MKFS_ABORTED,                               
+    "Could not get a grant to access the volume within defined period",                 //FR_TIMEOUT,                        
+    "The operation is rejected according to the file sharing policy",                   //FR_LOCKED,                                 
+    "LFN working buffer could not be allocated",                                        //FR_NOT_ENOUGH_CORE,                        
+    "Number of open files > _FS_SHARE",                                                 //FR_TOO_MANY_OPEN_FILES,                                            
+    "Invalid parameter",                                                                //FR_INVALID_PARAMETER,          
 };
 
 
-#define FSCHK(a,b) {printf("___%s___%d: %s\n", a, b, ffs_err[b].str); if(b>0) exit(1);};
+#define CHK(a,b) printf("___%s, %d, %s\n", a, b, my_err[b])
 
-#define SIZE   (2*1024*1024)
-#define LABEL   "web"
+
 #define MAX_PATH 300
 
 typedef struct
@@ -118,8 +117,10 @@ static int f_copy(char *path)
         if(dir) {
             f_chdir(dn.name);
             while((ent=readdir(dir))) {
-                snprintf(tmp, sizeof tmp, "%s/%s", path, ent->d_name);  
-                f_copy(tmp);
+                if(strcmp(ent->d_name,".") && strcmp(ent->d_name,"..")) {
+                    snprintf(tmp, sizeof tmp, "%s/%s", path, ent->d_name);  
+                    f_copy(tmp);
+                }
             }
             
             closedir(dir);
@@ -133,20 +134,27 @@ static int f_copy(char *path)
             fread(buf, 1, st.st_size, fd);
             fclose(fd);
             
-            if(f_open (&fp, dn.name, FA_CREATE_NEW)==FR_OK) {
+            int wl;
+            if(f_open (&fp, dn.name, FA_CREATE_NEW|FA_WRITE)==FR_OK) {
                 printf("____ copy %s ...\n", dn.name);
-                f_write(&fp, buf, st.st_size, NULL);
+                fr = f_write(&fp, buf, st.st_size, &wl);
+                CHK("f_write", fr);
                 f_close(&fp);
+                printf("____ f_close\n");
             }
             else {
                 printf("____ create %s failed\n", dn.name);
             }
+            
+            free(buf);
         }
     }
 }
 
+/////////////////////////////////////////
 
-
+#define SIZE   (2*1024*1024)
+#define LABEL   "web"
 int main(int argc, char **argv)
 {
     int fd;
@@ -155,15 +163,18 @@ int main(int argc, char **argv)
     FRESULT fr;
     BYTE work[FF_MAX_SS];
     
+    remove(IMAGE);
     mkimage(IMAGE, SIZE);
-    
-    FSCHK("mkfs", f_mkfs("", FM_SFD|FM_FAT, 0, work, sizeof work));
-    FSCHK("setlabel", f_setlabel("0"LABEL));
-    
-    FSCHK("mount", f_mount(&fs, IMAGE, 0));
-    f_copy(".");
-    FSCHK("unmount", f_unmount(IMAGE));
-    
+    CHK("mkfs", f_mkfs("", FM_ANY, 0, work, sizeof work));
+
+    CHK("mount", f_mount(&fs, IMAGE, 0));
+    printf("123\n");
+    CHK("setlabel", f_setlabel(LABEL));
+    printf("abc\n");
+    /*
+    f_copy("./build");
+    CHK("unmount", f_unmount(IMAGE));
+    */
     return 0;
 }
 

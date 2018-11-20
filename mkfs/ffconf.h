@@ -4,9 +4,10 @@
 
 #define FFCONF_DEF	86604	/* Revision ID */
 
-/* minimum 128 */
-#define SECCOUNT    128
 #define IMAGE       "./web.bin"
+#define SECTOR_SZ   512//(4*1024)
+#define SECTOR_CNT  (8*1024)//(1024)
+#define BLOCK_SZ    (1)
 
 /*---------------------------------------------------------------------------/
 / Function Configurations

@@ -28,11 +28,7 @@ DSTATUS disk_status (
 	BYTE pdrv		/* Physical drive nmuber to identify the drive */
 )
 {
-	DSTATUS stat;
-	int result;
-
-
-	return 0;
+	return RES_OK;
 }
 
 
@@ -68,11 +64,13 @@ DRESULT disk_read (
 )
 {
 	DRESULT res;
-	int result;
+	int r;
 
-	//printf("disk_read %d %ld %d\n", fno, sector, count);
-	lseek(fno, sector*512, SEEK_SET);
-	read(fno, buff, 512*count);
+	printf("fno: %d, sector: %ld count: %d\n", fno, sector, count);
+	lseek(fno, sector*SECTOR_SZ, SEEK_SET);
+	printf("xxxxxxxx\n");
+	r = read(fno, buff, count*SECTOR_SZ);
+	printf("yyyyyyy\n");
 
 	return RES_OK;
 }
@@ -93,8 +91,8 @@ DRESULT disk_write (
 	DRESULT res;
 	int result;
 	//printf("disk_write %d %ld %d\n", fno, sector, count);	
-	lseek(fno, sector*512, SEEK_SET);
-	write(fno, buff, 512*count);
+	lseek(fno, sector*SECTOR_SZ, SEEK_SET);
+	write(fno, buff, count*SECTOR_SZ);
 	return RES_OK;
 }
 
@@ -113,19 +111,27 @@ DRESULT disk_ioctl (
 	DRESULT res;
 	int result;
 
-	//printf("disk_ioctl %d %d\n", pdrv, cmd);
-	if (cmd == 3) { // sector size
-	  *((WORD*)buff) = 512;
-	  return RES_OK;
+	switch(cmd) {
+	    case CTRL_SYNC:
+	    break;
+	    
+	    case GET_SECTOR_COUNT:
+	    *(DWORD*)buff = SECTOR_CNT;
+	    break;
+	    
+	    case GET_SECTOR_SIZE:
+	    *(WORD*)buff = SECTOR_SZ;
+	    break;
+	    
+	    case GET_BLOCK_SIZE:
+	    *(WORD*)buff = BLOCK_SZ;
+	    break;
+	    
+	    default:
+	    return RES_PARERR;
 	}
-	if (cmd == 1) { // total count
-	  *((DWORD*)buff) = SECCOUNT;
-	  return RES_OK;	  
-	}
-	if (cmd == CTRL_SYNC) {
-	  return RES_OK;	  
-	}
-	return RES_PARERR;
+	
+	return RES_OK;
 }
 
 
