@@ -1,3 +1,9 @@
+/*
+	妈个比, 连工具都还要自己写, allwinner的狗屎代码
+*/
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -8,10 +14,18 @@
 #include <errno.h>
 #include "ff.h"
 
+
+#define SIZE   (2*1024*1024)
+#define LABEL   "web"
+#define MAX_PATH 4096
+
+
+///////////////////////////////////////////////////
+#define CHK(a,b) printf("___%s, %s\n", a, my_err[b]);
+
 typedef struct {
     char    *info;
 }err_t;
-
 
 static char* my_err[FR_MAX]={
     "Succeeded",                                                                        //FR_OK,                     
@@ -36,11 +50,6 @@ static char* my_err[FR_MAX]={
     "Invalid parameter",                                                                //FR_INVALID_PARAMETER,          
 };
 
-
-#define CHK(a,b) printf("___%s, %s\n", a, my_err[b]);
-
-
-#define MAX_PATH 4096
 
 typedef struct
 {
@@ -185,8 +194,7 @@ static int f_scan(char *path)
 }
 
 
-#define SIZE   (2*1024*1024)
-#define LABEL   "web"
+
 static int f_mkimg()
 {
     int fd;
@@ -223,8 +231,6 @@ static int f_print()
 
 
 /////////////////////////////////////////
-
-
 int main(int argc, char **argv)
 {
     f_mkimg();
