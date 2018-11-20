@@ -5,8 +5,8 @@
 #define FFCONF_DEF	86604	/* Revision ID */
 
 /* minimum 128 */
-#define SECCOUNT 128
-
+#define SECCOUNT    128
+#define IMAGE       "./web.bin"
 
 /*---------------------------------------------------------------------------/
 / Function Configurations
@@ -59,7 +59,7 @@
 /  (0:Disable or 1:Enable) Also FF_FS_READONLY needs to be 0 to enable this option. */
 
 
-#define FF_USE_LABEL	0
+#define FF_USE_LABEL	1
 /* This option switches volume label functions, f_getlabel() and f_setlabel().
 /  (0:Disable or 1:Enable) */
 
@@ -154,7 +154,7 @@
 */
 
 
-#define FF_FS_RPATH		0
+#define FF_FS_RPATH		1
 /* This option configures support for relative path.
 /
 /   0: Disable relative path and remove related functions.

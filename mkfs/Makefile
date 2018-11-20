@@ -1,5 +1,5 @@
 
-TARGET = wdev
+TARGET = mkfs
 INNER_USE = 0
 
 

@@ -47,11 +47,11 @@ DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-  printf("disk_initialize\n");
-  if (fno == -1)
-    fno = open("abc.dat", O_SYNC|O_RDWR, S_IRUSR|S_IWUSR);
-  lseek(fno, 0, SEEK_SET);
-  return RES_OK;
+    if (fno == -1)
+        fno = open(IMAGE, O_SYNC|O_RDWR, S_IRUSR|S_IWUSR);
+        
+    lseek(fno, 0, SEEK_SET);
+    return RES_OK;
 }
 
 
@@ -70,7 +70,7 @@ DRESULT disk_read (
 	DRESULT res;
 	int result;
 
-	printf("disk_read %d %ld %d\n", fno, sector, count);
+	//printf("disk_read %d %ld %d\n", fno, sector, count);
 	lseek(fno, sector*512, SEEK_SET);
 	read(fno, buff, 512*count);
 
@@ -92,7 +92,7 @@ DRESULT disk_write (
 {
 	DRESULT res;
 	int result;
-	printf("disk_write %d %ld %d\n", fno, sector, count);	
+	//printf("disk_write %d %ld %d\n", fno, sector, count);	
 	lseek(fno, sector*512, SEEK_SET);
 	write(fno, buff, 512*count);
 	return RES_OK;
@@ -113,7 +113,7 @@ DRESULT disk_ioctl (
 	DRESULT res;
 	int result;
 
-	printf("disk_ioctl %d %d\n", pdrv, cmd);
+	//printf("disk_ioctl %d %d\n", pdrv, cmd);
 	if (cmd == 3) { // sector size
 	  *((WORD*)buff) = 512;
 	  return RES_OK;
