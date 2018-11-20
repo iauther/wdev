@@ -66,11 +66,9 @@ DRESULT disk_read (
 	DRESULT res;
 	int r;
 
-	printf("fno: %d, sector: %ld count: %d\n", fno, sector, count);
+	//printf("fno: %d, sector: %ld count: %d\n", fno, sector, count);
 	lseek(fno, sector*SECTOR_SZ, SEEK_SET);
-	printf("xxxxxxxx\n");
 	r = read(fno, buff, count*SECTOR_SZ);
-	printf("yyyyyyy\n");
 
 	return RES_OK;
 }

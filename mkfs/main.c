@@ -168,9 +168,7 @@ int main(int argc, char **argv)
     CHK("mkfs", f_mkfs("", FM_ANY, 0, work, sizeof work));
 
     CHK("mount", f_mount(&fs, IMAGE, 0));
-    printf("123\n");
     CHK("setlabel", f_setlabel(LABEL));
-    printf("abc\n");
     /*
     f_copy("./build");
     CHK("unmount", f_unmount(IMAGE));
