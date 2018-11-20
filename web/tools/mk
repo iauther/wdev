@@ -3,8 +3,9 @@ WEBDIR=".."
 TMPDIR="./tmp"
 IMGDIR="/tmp/_img_"
 SINGLE="single.js"
-SIZE=2097152
-#SIZE=2097152
+SIZE="0x200000"
+FSTYPE="FATFS"
+DEBUG="-d 2"
 CPDIR="~/Desktop"
 
 LIB="laya"
@@ -44,7 +45,14 @@ copy_to_tmp() {
 #make img file
 make_img1() {
     rm $IMG
-    ./fat -c $TMPDIR -s $SIZE $IMG
+    
+    if [ $FSTYPE == "FATFS" ]; then
+        ./mkfatfs -c $TMPDIR -s $SIZE $DEBUG $IMG
+    elif [ $FSTYPE == "SPIFFS" ]; then
+        ./mkspiffs -c $TMPDIR -b 4096 -p 256 -s $SIZE $DEBUG $IMG
+    else
+        echo "error fs format!"
+    fi
 }
 
 
@@ -67,10 +75,10 @@ make_img2() {
         mkdir -p $IMGDIR
         mount -t vfat $IMG $IMGDIR
         if [ $? -eq 0 ];then
-        copy_to_img
-        umount $tmp
+            copy_to_img
+            umount $tmp
         else
-        echo "mount $img failed"
+            echo "mount $img failed"
         fi
     fi
 }
