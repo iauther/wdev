@@ -15,7 +15,7 @@
 #include "ff.h"
 
 
-#define SIZE   (2*1024*1024)
+#define SIZE   (SSIZE*SCOUNT)
 #define LABEL   "web"
 #define MAX_PATH 4096
 
@@ -183,11 +183,10 @@ static int f_mkimg()
     
     mkfile(IMAGE, SIZE);
     
-    CHK("mkfs", f_mkfs("", FM_SFD|FM_FAT, 0, work, sizeof work));
+    CHK("mkfs", f_mkfs("", FM_ANY | FM_SFD, SSIZE, work, sizeof work));
 
     CHK("mount", f_mount(&fs, IMAGE, 0));
     CHK("setlabel", f_setlabel(LABEL));
-    
     dir = "./tmp";
     f_copy(dir, strlen(dir));
     CHK("unmount", f_unmount(IMAGE));

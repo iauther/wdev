@@ -67,8 +67,8 @@ DRESULT disk_read (
 	int r;
 
 	//printf("fno: %d, sector: %ld count: %d\n", fno, sector, count);
-	lseek(fno, sector*SECTOR_SZ, SEEK_SET);
-	r = read(fno, buff, count*SECTOR_SZ);
+	lseek(fno, sector*SSIZE, SEEK_SET);
+	r = read(fno, buff, count*SSIZE);
 
 	return RES_OK;
 }
@@ -89,8 +89,8 @@ DRESULT disk_write (
 	DRESULT res;
 	int result;
 	//printf("disk_write %d %ld %d\n", fno, sector, count);	
-	lseek(fno, sector*SECTOR_SZ, SEEK_SET);
-	write(fno, buff, count*SECTOR_SZ);
+	lseek(fno, sector*SSIZE, SEEK_SET);
+	write(fno, buff, count*SSIZE);
 	return RES_OK;
 }
 
@@ -114,15 +114,11 @@ DRESULT disk_ioctl (
 	    break;
 	    
 	    case GET_SECTOR_COUNT:
-	    *(DWORD*)buff = SECTOR_CNT;
+	    *(DWORD*)buff = SCOUNT;
 	    break;
 	    
 	    case GET_SECTOR_SIZE:
-	    *(WORD*)buff = SECTOR_SZ;
-	    break;
-	    
-	    case GET_BLOCK_SIZE:
-	    *(WORD*)buff = BLOCK_SZ;
+	    *(WORD*)buff = SSIZE;
 	    break;
 	    
 	    default:

@@ -5,9 +5,8 @@
 #define FFCONF_DEF	86604	/* Revision ID */
 
 #define IMAGE       "./web.bin"
-#define SECTOR_SZ   512//(4*1024)
-#define SECTOR_CNT  (8*1024)//(1024)
-#define BLOCK_SZ    (1)
+#define SSIZE       (4*1024)
+#define SCOUNT      (504)//(504)
 
 /*---------------------------------------------------------------------------/
 / Function Configurations
@@ -73,7 +72,7 @@
 / Locale and Namespace Configurations
 /---------------------------------------------------------------------------*/
 
-#define FF_CODE_PAGE	932
+#define FF_CODE_PAGE	437//932
 /* This option specifies the OEM code page to be used on the target system.
 /  Incorrect code page setting can cause a file open failure.
 /
@@ -196,7 +195,7 @@
 
 
 #define FF_MIN_SS		512
-#define FF_MAX_SS		512
+#define FF_MAX_SS		4096
 /* This set of options configures the range of sector size to be supported. (512,
 /  1024, 2048 or 4096) Always set both 512 for most systems, generic memory card and
 /  harddisk. But a larger value may be required for on-board flash memory and some
