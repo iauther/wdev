@@ -31,7 +31,8 @@ CFILES += diskio.c \
 ifeq ($(USE_WL),1)
     IDIRS  += wl/inc
     CFILES += wl/src/diskio_wl.c \
-              wl/src/file.c
+              wl/src/file.c \
+              wl/src/log.c
               
     CPPFILES += wl/src/crc.cpp \
                 wl/src/crc32.cpp \

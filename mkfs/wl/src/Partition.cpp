@@ -13,6 +13,8 @@
 
 #include "file.h"
 #include "Partition.h"
+#include "esp_log.h"
+
 static const char *TAG = "wl_partition";
 
 Partition::Partition(const esp_partition_t *partition)

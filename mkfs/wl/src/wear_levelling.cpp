@@ -23,6 +23,7 @@
 #include "WL_Ext_Safe.h"
 #include "SPI_Flash.h"
 #include "Partition.h"
+#include "esp_log.h"
 
 #ifndef MAX_WL_HANDLES
 #define MAX_WL_HANDLES 8
@@ -91,7 +92,7 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
     cfg.fat_sector_size = CONFIG_WL_SECTOR_SIZE;
 
     if (*out_handle == WL_INVALID_HANDLE) {
-        printf("MAX_WL_HANDLES=%d instances already allocated", MAX_WL_HANDLES);
+        ESP_LOGE(TAG, "MAX_WL_HANDLES=%d instances already allocated", MAX_WL_HANDLES);
         result = ESP_ERR_NO_MEM;
         goto out;
     }
@@ -102,7 +103,7 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
     part_ptr = malloc(sizeof(Partition));
     if (part_ptr == NULL) {
         result = ESP_ERR_NO_MEM;
-        printf("%s: can't allocate Partition", __func__);
+        ESP_LOGE(TAG, "%s: can't allocate Partition", __func__);
         goto out;
     }
     part = new (part_ptr) Partition(partition);
@@ -114,7 +115,7 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
 
     if (wl_flash_ptr == NULL) {
         result = ESP_ERR_NO_MEM;
-        printf("%s: can't allocate WL_Ext_Safe", __func__);
+        ESP_LOGE(TAG, "%s: can't allocate WL_Ext_Safe", __func__);
         goto out;
     }
     wl_flash = new (wl_flash_ptr) WL_Ext_Safe();
@@ -123,7 +124,7 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
 
     if (wl_flash_ptr == NULL) {
         result = ESP_ERR_NO_MEM;
-        printf("%s: can't allocate WL_Ext_Perf", __func__);
+        ESP_LOGE(TAG, "%s: can't allocate WL_Ext_Perf", __func__);
         goto out;
     }
     wl_flash = new (wl_flash_ptr) WL_Ext_Perf();
@@ -134,7 +135,7 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
 
     if (wl_flash_ptr == NULL) {
         result = ESP_ERR_NO_MEM;
-        printf("%s: can't allocate WL_Flash", __func__);
+        ESP_LOGE(TAG, "%s: can't allocate WL_Flash", __func__);
         goto out;
     }
     wl_flash = new (wl_flash_ptr) WL_Flash();
@@ -142,12 +143,12 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
 
     result = wl_flash->config(&cfg, part);
     if (ESP_OK != result) {
-        printf("%s: config instance=0x%08x, result=0x%x", __func__, *out_handle, result);
+        ESP_LOGE(TAG, "%s: config instance=0x%08x, result=0x%x", __func__, *out_handle, result);
         goto out;
     }
     result = wl_flash->init();
     if (ESP_OK != result) {
-        printf("%s: init instance=0x%08x, result=0x%x", __func__, *out_handle, result);
+        ESP_LOGE(TAG, "%s: init instance=0x%08x, result=0x%x", __func__, *out_handle, result);
         goto out;
     }
     s_instances[*out_handle].instance = wl_flash;
@@ -255,15 +256,15 @@ size_t wl_sector_size(wl_handle_t handle)
 static esp_err_t check_handle(wl_handle_t handle, const char *func)
 {
     if (handle == WL_INVALID_HANDLE) {
-        printf("%s: invalid handle", func);
+        ESP_LOGE(TAG, "%s: invalid handle", func);
         return ESP_ERR_NOT_FOUND;
     }
     if (handle >= MAX_WL_HANDLES) {
-        printf("%s: instance[0x%08x] out of range", func, handle);
+        ESP_LOGE(TAG, "%s: instance[0x%08x] out of range", func, handle);
         return ESP_ERR_INVALID_ARG;
     }
     if (s_instances[handle].instance == NULL) {
-        printf("%s: instance[0x%08x] not initialized", func, handle);
+        ESP_LOGE(TAG, "%s: instance[0x%08x] not initialized", func, handle);
         return ESP_ERR_NOT_FOUND;
     }
     return ESP_OK;
