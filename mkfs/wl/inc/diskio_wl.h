@@ -20,18 +20,22 @@ extern "C" {
 #endif
 
 #include "integer.h"
+#include "esp_err.h"
 #include "wear_levelling.h"
 
+typedef BYTE	DSTATUS;
 
-DSTATUS diskio_wl_initialize (BYTE pdrv);
+int diskio_wl_reg(BYTE pdrv, wl_handle_t flash_handle);
 
-DSTATUS diskio_wl_status (BYTE pdrv);
+int diskio_wl_initialize (BYTE pdrv);
 
-DRESULT diskio_wl_read (BYTE pdrv, BYTE *buff, DWORD sector, UINT count);
+int diskio_wl_status (BYTE pdrv);
 
-DRESULT diskio_wl_write (BYTE pdrv, const BYTE *buff, DWORD sector, UINT count);
+int diskio_wl_read (BYTE pdrv, BYTE *buff, DWORD sector, UINT count);
 
-DRESULT diskio_wl_ioctl (BYTE pdrv, BYTE cmd, void *buff);
+int diskio_wl_write (BYTE pdrv, const BYTE *buff, DWORD sector, UINT count);
+
+int diskio_wl_ioctl (BYTE pdrv, BYTE cmd, void *buff);
 
 #ifdef __cplusplus
 }

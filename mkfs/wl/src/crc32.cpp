@@ -12,7 +12,7 @@
 // limitations under the License.
 
 #include "crc32.h"
-#include "rom/crc.h"
+#include "crc.h"
 
 unsigned int crc32::crc32_le(unsigned int crc, unsigned char const *buf, unsigned int len)
 {

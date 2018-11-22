@@ -46,9 +46,9 @@ DSTATUS disk_initialize (
     DSTATUS r;
     
 #ifdef USE_WL
-    r = diskio_wl_initialize(pdrv);
+    r = (DRESULT)diskio_wl_initialize(pdrv);
 #else
-    r = diskio_wl_initialize(pdrv);
+    r = (DRESULT)diskio_wl_initialize(pdrv);
 #endif
     
     return r;
@@ -62,12 +62,12 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-	DSTATUS r;
+	DRESULT r;
 	
 #ifdef USE_WL
-    r = diskio_wl_read(pdrv,buff,sector,count);
+    r = (DRESULT)diskio_wl_read(pdrv,buff,sector,count);
 #else
-	r = diskio_std_read(pdrv,buff,sector,count);
+	r = (DRESULT)diskio_std_read(pdrv,buff,sector,count);
 #endif
 
 	return r;
@@ -81,13 +81,12 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
-	DRESULT res;
-	int result;
+	DRESULT r;
 
 #ifdef USE_WL
-    r = diskio_wl_write(pdrv,buff,sector,count);
+    r = (DRESULT)diskio_wl_write(pdrv,buff,sector,count);
 #else
-	r = diskio_std_write(pdrv,buff,sector,count);
+	r = (DRESULT)diskio_std_write(pdrv,buff,sector,count);
 #endif
 	
 	return RES_OK;
@@ -105,13 +104,12 @@ DRESULT disk_ioctl (
 	void *buff		/* Buffer to send/receive control data */
 )
 {
-	DRESULT res;
-	int result;
+	DRESULT r;
 
 #ifdef USE_WL
-    r = diskio_wl_ioctl(pdrv,cmd,buff);
+    r = (DRESULT)diskio_wl_ioctl(pdrv,cmd,buff);
 #else
-	r = diskio_std_ioctl(pdrv,cmd,buff);
+	r = (DRESULT)diskio_std_ioctl(pdrv,cmd,buff);
 #endif
 
 	return RES_OK;

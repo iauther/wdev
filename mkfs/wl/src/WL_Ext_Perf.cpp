@@ -13,13 +13,13 @@
 
 #include "WL_Ext_Perf.h"
 #include <stdlib.h>
-#include "esp_log.h"
+//#include "esp_log.h"
 
 static const char *TAG = "wl_ext_perf";
 
 #define WL_EXT_RESULT_CHECK(result) \
     if (result != ESP_OK) { \
-        ESP_LOGE(TAG,"%s(%d): result = 0x%08x", __FUNCTION__, __LINE__, result); \
+        printf("%s(%d): result = 0x%08x", __FUNCTION__, __LINE__, result); \
         return (result); \
     }
 
@@ -74,7 +74,7 @@ esp_err_t WL_Ext_Perf::erase_sector(size_t sector)
 
 esp_err_t WL_Ext_Perf::erase_sector_fit(uint32_t start_sector, uint32_t count)
 {
-    ESP_LOGV(TAG, "%s begin, start_sector = 0x%08x, count = %i", __func__, start_sector, count);
+    printf("%s begin, start_sector = 0x%08x, count = %i", __func__, start_sector, count);
     // This method works with one flash device sector and able to erase "count" of fatfs sectors from this sector
     esp_err_t result = ESP_OK;
 
@@ -125,7 +125,7 @@ esp_err_t WL_Ext_Perf::erase_range(size_t start_address, size_t size)
     // stored back.
     // For the rest area this operation not needed because complete flash device sector will be erased.
 
-    ESP_LOGV(TAG, "%s begin, addr = 0x%08x, size = %i", __func__, start_address, size);
+    printf("%s begin, addr = 0x%08x, size = %i", __func__, start_address, size);
     // Calculate pre check values
     uint32_t pre_check_start = (start_address / this->fat_sector_size) % this->size_factor;
     uint32_t sectors_count = size / this->fat_sector_size;
@@ -151,7 +151,7 @@ esp_err_t WL_Ext_Perf::erase_range(size_t start_address, size_t size)
         result = this->erase_sector_fit(start_address / this->fat_sector_size, pre_check_count);
         WL_EXT_RESULT_CHECK(result);
     }
-    ESP_LOGV(TAG, "%s rest_check_start = %i, pre_check_count=%i, rest_check_count=%i, post_check_count=%i\n", __func__, rest_check_start, pre_check_count, rest_check_count, post_check_count);
+    printf("%s rest_check_start = %i, pre_check_count=%i, rest_check_count=%i, post_check_count=%i\n", __func__, rest_check_start, pre_check_count, rest_check_count, post_check_count);
     if (rest_check_count > 0) {
         rest_check_count = rest_check_count / this->size_factor;
         size_t start_sector = rest_check_start / this->flash_sector_size;

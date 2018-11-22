@@ -14,6 +14,11 @@
 #include <errno.h>
 #include "ff.h"
 
+#ifdef USE_WL
+#include "diskio_wl.h"
+#else
+#include "diskio_std.h"
+#endif
 
 #define SIZE   (SSIZE*SCOUNT)
 #define LABEL   "web"
@@ -91,7 +96,7 @@ static int f_copy(char *path, int l)
     else {
         fd = fopen(path, "rb");
         if(fd) {
-            buf = malloc(st.st_size);
+            buf = (char *)malloc(st.st_size);
             fread(buf, 1, st.st_size, fd);
             fclose(fd);
             
@@ -101,7 +106,7 @@ static int f_copy(char *path, int l)
             if(fr==FR_OK) {
                 int wl;
                 //printf("____ copy %s ...\n", dn.name);
-                fr = f_write(&fp, buf, st.st_size, &wl);
+                fr = f_write(&fp, buf, st.st_size, (UINT*)&wl);
                 //CHK("f_write", fr);
                 f_close(&fp);
             }
@@ -209,6 +214,39 @@ static int f_print()
 
 
 /////////////////////////////////////////
+static esp_partition_t my_part={
+    .type = ESP_PARTITION_TYPE_DATA,
+    .subtype = ESP_PARTITION_SUBTYPE_DATA_FAT,
+    .address = 0x200000,
+    .size = 0x200000,
+    .label = "web",
+    .encrypted = 0,
+};
+
+#ifdef USE_WL
+static wl_handle_t wl;
+static int wl_init()
+{
+    esp_err_t r;
+    BYTE d=0;
+    char drv[3] = {(char)('0'+d), ':', 0};
+    
+    r = wl_mount(&my_part, &wl);
+    diskio_wl_reg(d, wl);
+    
+    return 0;
+}
+
+static int wl_free()
+{
+    wl_unmount(wl);
+    
+    return 0;
+}
+#endif
+
+
+
 int main(int argc, char **argv)
 {
     int ch;
@@ -238,7 +276,16 @@ int main(int argc, char **argv)
     }
 #endif
 
+#ifdef USE_WL
+    wl_init();
+#endif
+
     f_mkimg();
+    
+ #ifdef USE_WL
+    wl_free();
+#endif   
+    
     f_print();
     
     return 0;

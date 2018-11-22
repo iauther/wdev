@@ -30,10 +30,12 @@ CFILES += diskio.c \
 
 ifeq ($(USE_WL),1)
     IDIRS  += wl/inc
-    CFILES += wl/src/diskio_wl.c
-    CPPFILES += wl/src/crc32.cpp \
+    CFILES += wl/src/diskio_wl.c \
+              wl/src/file.c
+              
+    CPPFILES += wl/src/crc.cpp \
+                wl/src/crc32.cpp \
                 wl/src/Partition.cpp \
-                wl/src/SPI_Flash.cpp \
                 wl/src/WL_Ext_Perf.cpp \
                 wl/src/WL_Ext_Safe.cpp \
                 wl/src/WL_Flash.cpp \
@@ -51,13 +53,14 @@ OBJS = $(addprefix $(BLD_DIR)/,$(CFILES:.c=.o)) $(addprefix $(BLD_DIR)/,$(CPPFIL
 DFILES = $(OBJS:.o=.d)
 ########################################
 
-$(info $(DFILES))
+$(info $(CPPFILES))
 
 IFLAGS += $(addprefix -I$(SRC_DIR)/,$(IDIRS))
 
-FLAGS = -std=c99 -MMD -MP -MF $(@:.o=.d)
-CFLAGS += $(FLAGS) $(IFLAGS) $(DFLAGS)
-LDFLAGS += -lc -lrt -pthread
+FLAGS = -MMD -MP -MF $(@:.o=.d)
+CFLAGS += -c -std=c99 $(FLAGS) $(IFLAGS) $(DFLAGS)
+CXXFLAGS += -c -std=c++11 $(FLAGS) $(IFLAGS) $(DFLAGS)
+LDFLAGS += #-lc #-lrt -pthread
 
 ########################################
 
@@ -66,16 +69,16 @@ LDFLAGS += -lc -lrt -pthread
 
 all: $(TARGET)
 
-$(TARGET): $(COBJS)
+$(TARGET): $(OBJS)
 	$(LD) $(LDFLAGS) $^ -o $@
 
 $(BLD_DIR)/%.o: $(SRC_DIR)/%.c Makefile
 	@mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $< -o $@
 
 $(BLD_DIR)/%.o: $(SRC_DIR)/%.cpp Makefile
 	@mkdir -p $(dir $@)
-	$(CXX) -c $(CFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) $< -o $@
 
 clean:
 	rm -rf $(BLD_DIR) $(TARGET)

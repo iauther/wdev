@@ -15,7 +15,7 @@
 #ifndef _wear_levelling_H_
 #define _wear_levelling_H_
 
-#include "esp_log.h"
+#include "esp_err.h"
 #include "esp_partition.h"
 
 #ifdef __cplusplus
