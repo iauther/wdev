@@ -5,7 +5,7 @@ IMGDIR="/tmp/_img_"
 SINGLE="single.js"
 SIZE="0x200000"
 FSTYPE="FATFS"
-DEBUG="-d 2"
+#DEBUG="-d 2"
 CPDIR="~/Desktop"
 
 LIB="laya"
@@ -48,6 +48,7 @@ make_img1() {
     
     if [ $FSTYPE == "FATFS" ]; then
         ./mkfatfs -c $TMPDIR -s $SIZE $DEBUG $IMG
+#        ./mkfs
     elif [ $FSTYPE == "SPIFFS" ]; then
         ./mkspiffs -c $TMPDIR -b 4096 -p 256 -s $SIZE $DEBUG $IMG
     else

@@ -10,8 +10,15 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
 #include "ffconf.h"
 #include "diskio.h"		/* FatFs lower layer API */
+
+#ifdef USE_WL
+#include "diskio_wl.h"
+#else
+#include "diskio_std.h"
+#endif
 
 /* Definitions of physical drive number for each drive */
 #define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
@@ -32,29 +39,21 @@ DSTATUS disk_status (
 }
 
 
-
-
-/*-----------------------------------------------------------------------*/
-/* Inidialize a Drive                                                    */
-/*-----------------------------------------------------------------------*/
-int fno=-1;
-
 DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-    if (fno == -1)
-        fno = open(IMAGE, O_SYNC|O_RDWR, S_IRUSR|S_IWUSR);
-        
-    lseek(fno, 0, SEEK_SET);
-    return RES_OK;
+    DSTATUS r;
+    
+#ifdef USE_WL
+    r = diskio_wl_initialize(pdrv);
+#else
+    r = diskio_wl_initialize(pdrv);
+#endif
+    
+    return r;
 }
 
-
-
-/*-----------------------------------------------------------------------*/
-/* Read Sector(s)                                                        */
-/*-----------------------------------------------------------------------*/
 
 DRESULT disk_read (
 	BYTE pdrv,		/* Physical drive nmuber to identify the drive */
@@ -63,21 +62,17 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-	DRESULT res;
-	int r;
+	DSTATUS r;
+	
+#ifdef USE_WL
+    r = diskio_wl_read(pdrv,buff,sector,count);
+#else
+	r = diskio_std_read(pdrv,buff,sector,count);
+#endif
 
-	//printf("fno: %d, sector: %ld count: %d\n", fno, sector, count);
-	lseek(fno, sector*SSIZE, SEEK_SET);
-	r = read(fno, buff, count*SSIZE);
-
-	return RES_OK;
+	return r;
 }
 
-
-
-/*-----------------------------------------------------------------------*/
-/* Write Sector(s)                                                       */
-/*-----------------------------------------------------------------------*/
 
 DRESULT disk_write (
 	BYTE pdrv,			/* Physical drive nmuber to identify the drive */
@@ -88,9 +83,13 @@ DRESULT disk_write (
 {
 	DRESULT res;
 	int result;
-	//printf("disk_write %d %ld %d\n", fno, sector, count);	
-	lseek(fno, sector*SSIZE, SEEK_SET);
-	write(fno, buff, count*SSIZE);
+
+#ifdef USE_WL
+    r = diskio_wl_write(pdrv,buff,sector,count);
+#else
+	r = diskio_std_write(pdrv,buff,sector,count);
+#endif
+	
 	return RES_OK;
 }
 
@@ -109,27 +108,33 @@ DRESULT disk_ioctl (
 	DRESULT res;
 	int result;
 
-	switch(cmd) {
-	    case CTRL_SYNC:
-	    break;
-	    
-	    case GET_SECTOR_COUNT:
-	    *(DWORD*)buff = SCOUNT;
-	    break;
-	    
-	    case GET_SECTOR_SIZE:
-	    *(WORD*)buff = SSIZE;
-	    break;
-	    
-	    default:
-	    return RES_PARERR;
-	}
-	
+#ifdef USE_WL
+    r = diskio_wl_ioctl(pdrv,cmd,buff);
+#else
+	r = diskio_std_ioctl(pdrv,cmd,buff);
+#endif
+
 	return RES_OK;
 }
 
 
-DWORD get_fattime() { return 0; };
+DWORD get_fattime(void)
+{
+    struct tm *tp;
+    time_t t = time(NULL);
+    
+    tp = localtime(&t);
+    int year = tp->tm_year < 80 ? 0 : tp->tm_year - 80;
+    return    ((DWORD)(year) << 25)
+            | ((DWORD)(tp->tm_mon + 1) << 21)
+            | ((DWORD)tp->tm_mday << 16)
+            | (WORD)(tp->tm_hour << 11)
+            | (WORD)(tp->tm_min << 5)
+            | (WORD)(tp->tm_sec >> 1);
+}
 
-void disk_flush() {
+
+void disk_flush()
+{
+    
 }
