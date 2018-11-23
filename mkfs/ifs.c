@@ -1,13 +1,19 @@
+#include <stdio.h>
+#include "esp_spiflash.h"
 #include "ifs.h"
 
 
+#define ALIGN   (1<<5)
+
+
 typedef struct {
+    char        use;
     addr_t      addr;
-    addr_t      len;
     //addr_t      next;
 }block_t;
 
 typedef struct {
+    char        use;
     char        path[PATH_LEN];
     addr_t      addr;              //
     len_t       len;               //
@@ -18,7 +24,7 @@ typedef struct {
 }table_t;
 
 typedef struct {
-    int         f;
+    FILE        *fp;
     index_t     *pi;                //index;
     len_t       ofs;                //offset
 }file_t;
@@ -40,14 +46,23 @@ static int _finit(int fd, addr_t s, addr_t e)
     ifs.start = s;
     ifs.end   = e;
     
-    fread(f, );
-    
     return 0;
 }
 
-static file_t* _fopen(str_t path)
+static file_t* _fopen(str_t path, char *mode)
 {
+    FILE *fp;
+    file_t *f;
     
+    fp = open(path, mode);
+    if(!fp) {
+        return NULL;
+    }
+    
+    f = calloc(1, sizeof(file_t));
+    if(f) {
+        f->fp = fp;
+    }
 }
 
 static int _fclose(file_t *f)
