@@ -74,7 +74,7 @@ make_img2() {
     
     if [ -f $IMG ];then
         mkdir -p $IMGDIR
-        mount -t vfat $IMG $IMGDIR
+        mount $IMG $IMGDIR
         if [ $? -eq 0 ];then
             copy_to_img
             umount $tmp
@@ -88,5 +88,5 @@ make_img2() {
 #process flow ...
 mangle_js
 copy_to_tmp
-make_img1
-#update_img
+make_img2
+update_img
