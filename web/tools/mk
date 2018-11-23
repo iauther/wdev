@@ -66,18 +66,16 @@ copy_to_img() {
 }
 make_img2() {
     
-    if [ ! -f $IMG ];then
-        echo "create $IMG"
-        dd if=/dev/zero of=$IMG bs=1M count=2
-        mkfs.vfat -F 32 -n "web" $IMG
-    fi
+    rm -f $IMG
+    dd if=/dev/zero of=$IMG bs=1M count=2
+    mkfs.fat -f 2 -F 32 -n "web" -s 128 -S 512 $IMG
     
     if [ -f $IMG ];then
         mkdir -p $IMGDIR
-        mount $IMG $IMGDIR
+        sudo mount $IMG $IMGDIR
         if [ $? -eq 0 ];then
             copy_to_img
-            umount $tmp
+            sudo umount $tmp
         else
             echo "mount $img failed"
         fi
@@ -89,4 +87,3 @@ make_img2() {
 mangle_js
 copy_to_tmp
 make_img2
-update_img
