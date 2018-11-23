@@ -68,7 +68,7 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
     WL_Flash *wl_flash = NULL;
     void *part_ptr = NULL;
     Partition *part = NULL;
-
+    
     //_lock_acquire(&s_instances_lock);
     esp_err_t result = ESP_OK;
     *out_handle = WL_INVALID_HANDLE;
@@ -78,7 +78,7 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
             break;
         }
     }
-
+    
     wl_ext_cfg_t cfg;
     cfg.full_mem_size = partition->size;
     cfg.start_addr = WL_DEFAULT_START_ADDR;
@@ -90,13 +90,13 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
     cfg.wr_size = WL_DEFAULT_WRITE_SIZE;
     // FAT sector size by default will be 512
     cfg.fat_sector_size = CONFIG_WL_SECTOR_SIZE;
-
+    
     if (*out_handle == WL_INVALID_HANDLE) {
         ESP_LOGE(TAG, "MAX_WL_HANDLES=%d instances already allocated", MAX_WL_HANDLES);
         result = ESP_ERR_NO_MEM;
         goto out;
     }
-
+    
     // Allocate memory for a Partition object, and then initialize the object
     // using placement new operator. This way we can recover from out of
     // memory condition.
@@ -107,7 +107,7 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
         goto out;
     }
     part = new (part_ptr) Partition(partition);
-
+    
     // Same for WL_Flash: allocate memory, use placement new
 #if CONFIG_WL_SECTOR_SIZE == 512
 #if CONFIG_WL_SECTOR_MODE == 1
@@ -121,7 +121,7 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
     wl_flash = new (wl_flash_ptr) WL_Ext_Safe();
 #else
     wl_flash_ptr = malloc(sizeof(WL_Ext_Perf));
-
+    
     if (wl_flash_ptr == NULL) {
         result = ESP_ERR_NO_MEM;
         ESP_LOGE(TAG, "%s: can't allocate WL_Ext_Perf", __func__);
@@ -132,7 +132,7 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
 #endif // CONFIG_WL_SECTOR_SIZE
 #if CONFIG_WL_SECTOR_SIZE == 4096
     wl_flash_ptr = malloc(sizeof(WL_Flash));
-
+    
     if (wl_flash_ptr == NULL) {
         result = ESP_ERR_NO_MEM;
         ESP_LOGE(TAG, "%s: can't allocate WL_Flash", __func__);
@@ -146,12 +146,15 @@ esp_err_t wl_mount(const esp_partition_t *partition, wl_handle_t *out_handle)
         ESP_LOGE(TAG, "%s: config instance=0x%08x, result=0x%x", __func__, *out_handle, result);
         goto out;
     }
+    
     result = wl_flash->init();
     if (ESP_OK != result) {
         ESP_LOGE(TAG, "%s: init instance=0x%08x, result=0x%x", __func__, *out_handle, result);
         goto out;
     }
     s_instances[*out_handle].instance = wl_flash;
+    ESP_LOGE(TAG, "ggggggggggggg handle: %d, %x", *out_handle, (unsigned int)wl_flash);
+    
     //_lock_init(&s_instances[*out_handle].lock);
     //_lock_release(&s_instances_lock);
     return ESP_OK;

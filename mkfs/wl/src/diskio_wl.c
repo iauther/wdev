@@ -16,43 +16,44 @@
 #include "diskio.h"
 #include "ffconf.h"
 #include "ff.h"
+#include "esp_log.h"
 #include "diskio_wl.h"
 #include "wear_levelling.h"
 
 static const char* TAG = "diskio_wl";
 
-wl_handle_t ff_wl_handles[FF_VOLUMES] = {
+wl_handle_t diskio_wl_handles[FF_VOLUMES] = {
         WL_INVALID_HANDLE,
         WL_INVALID_HANDLE,
 };
 
 
-esp_err_t diskio_wl_reg(BYTE pdrv, wl_handle_t flash_handle)
+esp_err_t diskio_wl_reg(BYTE pdrv, wl_handle_t handle)
 {
     if (pdrv >= FF_VOLUMES) {
         return ESP_ERR_INVALID_ARG;
     }
 
-    ff_wl_handles[pdrv] = flash_handle;
+    diskio_wl_handles[pdrv] = handle;
 
     return ESP_OK;
 }
 
-BYTE diskio_wl_get(wl_handle_t flash_handle)
+BYTE diskio_wl_index(wl_handle_t handle)
 {
     for (int i = 0; i < FF_VOLUMES; i++) {
-        if (flash_handle == ff_wl_handles[i]) {
+        if (handle == diskio_wl_handles[i]) {
             return i;
         }
     }
     return 0xff;
 }
 
-static void diskio_wl_clr(wl_handle_t flash_handle)
+void diskio_wl_unreg(wl_handle_t handle)
 {
     for (int i = 0; i < FF_VOLUMES; i++) {
-        if (flash_handle == ff_wl_handles[i]) {
-            ff_wl_handles[i] = WL_INVALID_HANDLE;
+        if (handle == diskio_wl_handles[i]) {
+            diskio_wl_handles[i] = WL_INVALID_HANDLE;
         }
     }
 }
@@ -72,8 +73,9 @@ int diskio_wl_status (BYTE pdrv)
 int diskio_wl_read (BYTE pdrv, BYTE *buff, DWORD sector, UINT count)
 {
     //printf("ff_wl_read - pdrv=%i, sector=%i, count=%i\n", (unsigned int)pdrv, (unsigned int)sector, (unsigned int)count);
-    wl_handle_t wl_handle = ff_wl_handles[pdrv];
-    assert(wl_handle + 1);
+    wl_handle_t wl_handle = diskio_wl_handles[pdrv];
+    assert(wl_handle+1);
+    
     esp_err_t err = wl_read(wl_handle, sector * wl_sector_size(wl_handle), buff, count * wl_sector_size(wl_handle));
     if (err != ESP_OK) {
         printf("wl_read failed (%d)", err);
@@ -85,7 +87,7 @@ int diskio_wl_read (BYTE pdrv, BYTE *buff, DWORD sector, UINT count)
 int diskio_wl_write (BYTE pdrv, const BYTE *buff, DWORD sector, UINT count)
 {
     //printf("ff_wl_write - pdrv=%i, sector=%i, count=%i\n", (unsigned int)pdrv, (unsigned int)sector, (unsigned int)count);
-    wl_handle_t wl_handle = ff_wl_handles[pdrv];
+    wl_handle_t wl_handle = diskio_wl_handles[pdrv];
     assert(wl_handle + 1);
     esp_err_t err = wl_erase_range(wl_handle, sector * wl_sector_size(wl_handle), count * wl_sector_size(wl_handle));
     if (err != ESP_OK) {
@@ -102,15 +104,16 @@ int diskio_wl_write (BYTE pdrv, const BYTE *buff, DWORD sector, UINT count)
 
 int diskio_wl_ioctl (BYTE pdrv, BYTE cmd, void *buff)
 {
-    wl_handle_t wl_handle = ff_wl_handles[pdrv];
-    printf("ff_wl_ioctl: cmd=%i\n", cmd);
+    wl_handle_t wl_handle = diskio_wl_handles[pdrv];
+    //printf("diskio_wl_ioctl: cmd=%i\n", cmd);
     assert(wl_handle + 1);
+    
     switch (cmd) {
     case CTRL_SYNC:
         return RES_OK;
     case GET_SECTOR_COUNT:
         *((DWORD *) buff) = wl_size(wl_handle) / wl_sector_size(wl_handle);
-        printf("_______ size: %d, ssize: %d, count: %d\n", wl_size(wl_handle), wl_sector_size(wl_handle), wl_size(wl_handle) / wl_sector_size(wl_handle));
+        //ESP_LOGE(TAG, "_______ size: %d, ssize: %d, count: %d\n", wl_size(wl_handle), wl_sector_size(wl_handle), wl_size(wl_handle) / wl_sector_size(wl_handle));
         return RES_OK;
     case GET_SECTOR_SIZE:
         *((WORD *) buff) = wl_sector_size(wl_handle);

@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "file.h"
 #include "Partition.h"
 #include "esp_log.h"
+#include "file.h"
 
 static const char *TAG = "wl_partition";
 
@@ -39,9 +39,9 @@ esp_err_t Partition::erase_range(size_t start_address, size_t size)
 {
     esp_err_t result = file_partition_erase(start_address, size);
     if (result == ESP_OK) {
-        printf("erase_range - start_address=0x%08x, size=0x%08x, result=0x%08x", start_address, size, result);
+        ESP_LOGV(TAG, "erase_range - start_address=0x%08x, size=0x%08x, result=0x%08x", start_address, size, result);
     } else {
-        printf("erase_range - start_address=0x%08x, size=0x%08x, result=0x%08x", start_address, size, result);
+        ESP_LOGE(TAG, "erase_range - start_address=0x%08x, size=0x%08x, result=0x%08x", start_address, size, result);
     }
     return result;
 }

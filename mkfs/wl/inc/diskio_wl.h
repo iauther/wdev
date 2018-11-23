@@ -25,7 +25,11 @@ extern "C" {
 
 typedef BYTE	DSTATUS;
 
-int diskio_wl_reg(BYTE pdrv, wl_handle_t flash_handle);
+int diskio_wl_reg(BYTE pdrv, wl_handle_t handle);
+
+BYTE diskio_wl_index(wl_handle_t handle);
+
+void diskio_wl_unreg(wl_handle_t handle);
 
 int diskio_wl_initialize (BYTE pdrv);
 

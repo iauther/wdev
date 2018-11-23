@@ -54,7 +54,6 @@ OBJS = $(addprefix $(BLD_DIR)/,$(CFILES:.c=.o)) $(addprefix $(BLD_DIR)/,$(CPPFIL
 DFILES = $(OBJS:.o=.d)
 ########################################
 
-$(info $(CPPFILES))
 
 IFLAGS += $(addprefix -I$(SRC_DIR)/,$(IDIRS))
 

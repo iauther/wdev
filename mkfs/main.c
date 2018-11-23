@@ -218,8 +218,8 @@ static esp_partition_t my_part={
     .type = ESP_PARTITION_TYPE_DATA,
     .subtype = ESP_PARTITION_SUBTYPE_DATA_FAT,
     .address = 0x200000,
-    .size = 0x200000,
-    .label = "web",
+    .size = SIZE,
+    .label = LABEL,
     .encrypted = 0,
 };
 
@@ -239,6 +239,7 @@ static int wl_init()
 
 static int wl_free()
 {
+    diskio_wl_unreg(wl);
     wl_unmount(wl);
     
     return 0;
@@ -281,12 +282,11 @@ int main(int argc, char **argv)
 #endif
 
     f_mkimg();
-    
- #ifdef USE_WL
-    wl_free();
-#endif   
-    
     f_print();
+    
+#ifdef USE_WL
+    wl_free();
+#endif
     
     return 0;
 }
