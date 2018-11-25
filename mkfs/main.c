@@ -20,20 +20,19 @@
 #include "diskio_std.h"
 #endif
 
-#define SIZE   (SSIZE*SCOUNT)
-#define LABEL   "web"
-#define MAX_PATH 4096
+#define SIZE        (SSIZE*SCOUNT)
+#define LABEL       "web"
+#define MAX_PATH    4096
+#define FOLDER      "./tmp"
 
-static char *root=NULL;
-///////////////////////////////////////////////////
 #define CHK(a,b) printf("___%s, %s\n", a, my_err[b]);
 #define DOTDIR(a) ((a[0]=='.' && a[1]==0) || (a[0]=='.' && a[1]=='.' && a[2]==0))
-
 
 typedef struct {
     char    *info;
 }err_t;
 
+static FATFS fs;
 static char* my_err[]={
     "Succeeded",                                                                        //FR_OK,                     
     "A hard error occurred in the low level disk I/O layer",                            //FR_DISK_ERR,               
@@ -57,8 +56,34 @@ static char* my_err[]={
     "Invalid parameter",                                                                //FR_INVALID_PARAMETER,          
 };
 
+///////////////////////////////////////////////////
+static int f_new(char *path, int len)
+{
+    #define BLEN 4096
+    FILE *fd;
+    char buf[BLEN];
+    int  i,cnt,left;
+    
+    //remove(path);
+    cnt = len/BLEN;
+    left = len%BLEN;
+    fd = fopen(path, "wb");
+    if(!fd) {
+        //printf("%s open failed\n");//strerror(errno));
+        printf("%s open failed %s", strerror(errno));
+        return -1;
+    }
+    
+    for(i=0;i<cnt;i++) {
+        fwrite(buf, 1, BLEN, fd);
+    }
+    fwrite(buf, 1, left, fd);
+    fclose(fd);
+    
+    return 0;
+}
 
-static int f_copy(char *path, int l)
+static int do_copy(char *path, int l)
 {
     FIL fp;
     FILE *fd;
@@ -86,7 +111,7 @@ static int f_copy(char *path, int l)
             while((ent=readdir(dir))) {
                 if(!DOTDIR(ent->d_name)) {
                     snprintf(tmp, sizeof tmp, "%s/%s", path, ent->d_name);  
-                    f_copy(tmp, l);
+                    do_copy(tmp, l);
                 }
             }
             
@@ -114,10 +139,45 @@ static int f_copy(char *path, int l)
             free(buf);
         }
     }
+    
+    return 0;
 }
 
+static int f_fmt()
+{
+    BYTE work[FF_MAX_SS];
+    CHK("mkfs", f_mkfs("", FM_ANY | FM_SFD, SSIZE, work, sizeof work));
 
-static int f_scan(char *path)
+    return 0;
+}
+
+static int f_load()
+{
+    CHK("mount", f_mount(&fs, IMAGE, 0));
+    return 0;
+}
+
+static int f_unload()
+{
+    CHK("umount", f_mount(0, IMAGE, 0));
+    return 0;
+}
+
+static int f_label(char *label)
+{
+    CHK("setlabel", f_setlabel(label));
+    return 0;
+}
+
+static int f_copy(char *path)
+{
+    do_copy(path, strlen(path));
+    return 0;
+}
+
+typedef int (*traver_fn)(char *dir, char *name);
+
+static int do_traver(char *path, traver_fn f)
 {
     int l;
     char *fn;
@@ -133,6 +193,8 @@ static int f_scan(char *path)
             if (!fn[0]) break;  
             if (DOTDIR(fn)) continue;
             
+            if (f) f(path, fn);
+            
             if (finfo.fattrib & AM_DIR) {
                 l = strlen(path);
                 if(path[l-1]=='/') {
@@ -141,7 +203,7 @@ static int f_scan(char *path)
                 else {
                     sprintf(npath, "%s/%s", path, fn);
                 }
-                f_scan(npath);
+                do_traver(npath, f);
             }
         } 
         f_closedir(&dir);
@@ -150,65 +212,24 @@ static int f_scan(char *path)
     return 0;
 }
 
-
-
-static int mkfile(char *path, int len)
+static int print_fn(char *dir, char *name)
 {
-    #define BLEN 4096
-    FILE *fd;
-    char buf[BLEN];
-    int  i,cnt,left;
+    int l;
+    char path[MAX_PATH];
     
-    //remove(path);
-    cnt = len/BLEN;
-    left = len%BLEN;
-    fd = fopen(path, "wb");
-    if(!fd) {
-        //printf("%s open failed\n");//strerror(errno));
-        printf("%s open failed %s", strerror(errno));
-        return -1;
+    l = strlen(dir);
+    if(dir[l-1]=='/') {
+        printf("___%s%s\n", dir, name);
     }
-    
-    for(i=0;i<cnt;i++) {
-        fwrite(buf, 1, BLEN, fd);
+    else {
+        printf("___%s/%s\n", dir, name);
     }
-    fwrite(buf, 1, left, fd);
-    fclose(fd);
     
     return 0;
 }
-
-static int f_mkimg()
+static int f_check()
 {
-    int fd;
-    char *dir;
-    FATFS fs;
-    FRESULT fr;
-    BYTE work[FF_MAX_SS];
-    
-    mkfile(IMAGE, SIZE);
-    
-    CHK("mkfs", f_mkfs("", FM_ANY | FM_SFD, SSIZE, work, sizeof work));
-
-    CHK("mount", f_mount(&fs, IMAGE, 0));
-    CHK("setlabel", f_setlabel(LABEL));
-    dir = "./tmp";
-    f_copy(dir, strlen(dir));
-    CHK("unmount", f_unmount(IMAGE));
-    
-    return 0;
-}
-
-
-static int f_print()
-{
-    FATFS fs;
-    FRESULT fr;
-    
-    CHK("mount", f_mount(&fs, IMAGE, 0));
-    f_scan("/");
-    CHK("unmount", f_unmount(IMAGE));
-    
+    do_traver("/", print_fn);
     return 0;
 }
 
@@ -281,8 +302,14 @@ int main(int argc, char **argv)
     wl_init();
 #endif
 
-    f_mkimg();
-    f_print();
+    f_new(IMAGE, SIZE);
+    f_fmt();
+    
+    f_load();
+    f_label(LABEL);
+    f_copy(FOLDER);
+    f_check();
+    f_unload();
     
 #ifdef USE_WL
     wl_free();

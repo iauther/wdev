@@ -1,5 +1,5 @@
 
-TARGET=mkfs
+TARGET=mkfat
 USE_WL=0
 
 
