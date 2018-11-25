@@ -13,6 +13,7 @@
 #include <time.h>
 #include "ffconf.h"
 #include "diskio.h"		/* FatFs lower layer API */
+#include "ff.h"
 
 #ifdef USE_WL
 #include "diskio_wl.h"
@@ -24,6 +25,14 @@
 #define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
 #define DEV_MMC		1	/* Example: Map MMC/SD card to physical drive 1 */
 #define DEV_USB		2	/* Example: Map USB MSD to physical drive 2 */
+
+
+#if FF_MULTI_PARTITION		/* Multiple partition configuration */
+PARTITION VolToPart[] = {
+    {0, 0},    /* Logical drive 0 ==> Physical drive 0, auto detection */
+    {1, 0}     /* Logical drive 1 ==> Physical drive 1, auto detection */
+};
+#endif
 
 
 

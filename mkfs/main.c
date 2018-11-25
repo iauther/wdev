@@ -146,7 +146,7 @@ static int do_copy(char *path, int l)
 static int f_fmt()
 {
     BYTE work[FF_MAX_SS];
-    CHK("mkfs", f_mkfs("", FM_ANY | FM_SFD, SSIZE, work, sizeof work));
+    CHK("mkfs", f_mkfs("", FM_ANY, SSIZE, work, sizeof work));
 
     return 0;
 }

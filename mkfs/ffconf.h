@@ -5,8 +5,8 @@
 #define FFCONF_DEF	86604	/* Revision ID */
 
 #define IMAGE       "./web.bin"
-#define SSIZE       4*1024
-#define SCOUNT      512
+#define SSIZE       (512)
+#define SCOUNT      (4096)
 
 /*---------------------------------------------------------------------------/
 / Function Configurations
@@ -154,7 +154,7 @@
 */
 
 
-#define FF_FS_RPATH		2
+#define FF_FS_RPATH		0
 /* This option configures support for relative path.
 /
 /   0: Disable relative path and remove related functions.
@@ -185,7 +185,7 @@
 */
 
 
-#define FF_MULTI_PARTITION	0
+#define FF_MULTI_PARTITION	1
 /* This option switches support for multiple volumes on the physical drive.
 /  By default (0), each logical drive number is bound to the same physical drive
 /  number and only an FAT volume found on the physical drive will be mounted.
@@ -195,7 +195,7 @@
 
 
 #define FF_MIN_SS		512
-#define FF_MAX_SS		4096
+#define FF_MAX_SS		512//4096
 /* This set of options configures the range of sector size to be supported. (512,
 /  1024, 2048 or 4096) Always set both 512 for most systems, generic memory card and
 /  harddisk. But a larger value may be required for on-board flash memory and some

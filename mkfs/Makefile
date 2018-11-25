@@ -70,7 +70,7 @@ LDFLAGS += #-lc #-lrt -pthread
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(LD) $(LDFLAGS) $^ -o $@
+	$(LD) $(LDFLAGS) $^ -o ../web/tools/$@
 
 $(BLD_DIR)/%.o: $(SRC_DIR)/%.c Makefile
 	@mkdir -p $(dir $@)
