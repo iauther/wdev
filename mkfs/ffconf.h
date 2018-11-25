@@ -5,8 +5,8 @@
 #define FFCONF_DEF	86604	/* Revision ID */
 
 #define IMAGE       "./web.bin"
-#define SSIZE       (4*1024)
-#define SCOUNT      (512)//(504)
+#define SSIZE       4*1024
+#define SCOUNT      512
 
 /*---------------------------------------------------------------------------/
 / Function Configurations

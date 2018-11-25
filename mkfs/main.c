@@ -214,6 +214,8 @@ static int f_print()
 
 
 /////////////////////////////////////////
+
+#ifdef USE_WL
 static esp_partition_t my_part={
     .type = ESP_PARTITION_TYPE_DATA,
     .subtype = ESP_PARTITION_SUBTYPE_DATA_FAT,
@@ -222,8 +224,6 @@ static esp_partition_t my_part={
     .label = LABEL,
     .encrypted = 0,
 };
-
-#ifdef USE_WL
 static wl_handle_t wl;
 static int wl_init()
 {

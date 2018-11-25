@@ -7,14 +7,14 @@
 extern "C" {
 #endif
 
-//#define BLOCK_SIZE      512
-
-
 #define INVALID_HND     (-1)
 #define INVALID_ADDR    (0xffffffff)
 
-#define PATH_LEN        (100)
-#define FILE_MAX        (100)
+#define FILE_MAX        100
+#define BLOCK_SZ        512
+#define PATH_MAX        255
+
+
 
 typedef uint32_t hnd_t
 typedef uint32_t addr_t
@@ -23,7 +23,7 @@ typedef char*    str_t
 
 int ifs_init(addr_t s, addr_t e);
 
-hnd_t ifs_open(str_t path, uint_32 e);
+hnd_t ifs_open(str_t path, int bnew);
 
 int ifs_read(hnd_t h, void *d, len_t l);
 

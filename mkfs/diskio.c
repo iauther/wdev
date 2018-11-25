@@ -48,7 +48,7 @@ DSTATUS disk_initialize (
 #ifdef USE_WL
     r = (DRESULT)diskio_wl_initialize(pdrv);
 #else
-    r = (DRESULT)diskio_wl_initialize(pdrv);
+    r = (DRESULT)diskio_std_initialize(pdrv);
 #endif
     
     return r;

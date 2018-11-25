@@ -6,7 +6,7 @@
 
 
 static int fno=-1;
-DSTATUS disk_std_initialize(BYTE pdrv)
+DSTATUS diskio_std_initialize(BYTE pdrv)
 {
     if (fno == -1)
         fno = open(IMAGE, O_SYNC|O_RDWR, S_IRUSR|S_IWUSR);
@@ -17,13 +17,13 @@ DSTATUS disk_std_initialize(BYTE pdrv)
 }
 
 
-DSTATUS disk_std_status(BYTE pdrv)
+DSTATUS diskio_std_status(BYTE pdrv)
 {
 	return RES_OK;
 }
 
 
-DRESULT disk_std_read(BYTE pdrv,BYTE *buff,DWORD sector,UINT count)
+DRESULT diskio_std_read(BYTE pdrv,BYTE *buff,DWORD sector,UINT count)
 {
 	DRESULT res;
 	int r;
@@ -36,7 +36,7 @@ DRESULT disk_std_read(BYTE pdrv,BYTE *buff,DWORD sector,UINT count)
 }
 
 
-DRESULT disk_std_write(BYTE pdrv,const BYTE *buff,DWORD sector,UINT count)
+DRESULT diskio_std_write(BYTE pdrv,const BYTE *buff,DWORD sector,UINT count)
 {
 	DRESULT res;
 	int result;
@@ -49,7 +49,7 @@ DRESULT disk_std_write(BYTE pdrv,const BYTE *buff,DWORD sector,UINT count)
 }
 
 
-DRESULT disk_std_ioctl(BYTE pdrv,BYTE cmd,void *buff)
+DRESULT diskio_std_ioctl(BYTE pdrv,BYTE cmd,void *buff)
 {
 	DRESULT res;
 	int result;

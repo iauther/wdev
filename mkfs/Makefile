@@ -1,6 +1,6 @@
 
 TARGET=mkfs
-USE_WL=1
+USE_WL=0
 
 
 CUR_DIR = $(shell pwd)
