@@ -48,6 +48,6 @@ make_img() {
 
 
 #process flow ...
-#mangle_js
+mangle_js
 copy_to_tmp
 make_img
