@@ -21,27 +21,36 @@ IO.WIFI=1<<tmp++;
 /////////////////////////////////////
 tmp=0;
 var TYPE=[];
-TYPE.PKT=tmp++;
-TYPE.PARA=tmp++;
 ///////////////
+TYPE.HDR=tmp++;
+
 TYPE.EQ=tmp++;
 TYPE.DYN=tmp++;
 TYPE.VOL=tmp++;
 TYPE.UPG=tmp++;
 TYPE.SETUP=tmp++;
+//...
+TYPE.ALL=tmp++;
 ///////////////
-TYPE.XXX=tmp++;
-//////////////
-
-
-var tp_vol={
-    tp:TYPE.VOL,
+//hdr:header
+var tp_hdr={//第1层
+    /*
+            typedef struct {
+                u32 magic;
+                u8  iotype;
+                u8  subtype;
+                u32 len;
+                u8  data[];
+            }packet_t;
+    */
+    tp:TYPE.HDR,
     st:{
-        port:   'u8.1.num',
-        type:   'u8.1.num',
-        flag:   'u8.1.num',
+        magic:   'u8.1.num',    //port:'u8.1.str'
+        iotype:  'u8.1.num',
+        subtype: 'u8.1.num',
+        len:     'u8.1.num',
+        data:    null,
     },
-    data:null,
 };
 
 var tp_gain={
@@ -51,6 +60,17 @@ var tp_gain={
     },
     data:null,
 };
+
+var tp_vol={
+    tp:TYPE.VOL,
+    st:{
+        port:   'u8.1.num',
+        type:   'u8.1.num',
+        flag:   'u8.1.num',
+    },
+    data:tp_gain,
+};
+
 var tp_eq={
     tp:TYPE.EQ,
     st:{
@@ -72,40 +92,9 @@ var tp_setup={
     data:null
 };
 
-var PKT={//第1层帧头定义
-    /*
-            typedef struct {
-                u32 magic;
-                u8  iotype;
-                u32 len;
-                u8  data[];
-            }packet_t;
-    */
-    tp:TYPE.PKT,
-    st:{
-        magic:'u8.1.num',    //port:'u8.1.str'
-        io:   'u8.1.num',
-        len:  'u8.1.num',
-        data:[//第2层帧头定义
-            tp_vol,
-            tp_eq,
-            tp_setup,
-            //...
-        ],
-    },
-};
 
-
-var PARA={
-    /*
-            typedef struct {
-                u32 magic;
-                u8  iotype;
-                u32 len;
-                u8  data[];
-            }packet_t;
-    */
-    tp:TYPE.PARA,
+var tp_all={
+    tp:TYPE.ALL,
     st:{
         ver:'u8.1.num',    //port:'u8.1.str'
         data:[//第2层帧头定义
@@ -116,6 +105,7 @@ var PARA={
         ],
     },
 };
+
 
 
 function bin_copy(bin)  {
@@ -187,7 +177,7 @@ function get_tlen(tp)
     }
 }
 
-//a:propty
+//p:propty
 function get_plen(p)
 {
     var s=p.split('.');
@@ -259,6 +249,26 @@ function bin_rw(rw,bin,offset,prop)
     return o;
 }
 
+function bin_join(b1,b2)
+{
+    if(!b1 && !b2) {
+        return null;
+    }
+    
+    if(b1 && !b2) {
+        return b1;
+    }
+    
+    if(b2 && !b1) {
+        return b2;
+    }
+    
+    var b=new ArrayBuffer(b1.byteLength+b2.byteLength);
+    b.set(b1,b1.byteLength);
+    b.set(b2,b1.byteLength);
+    return b;
+}
+
 function print_obj(obj)
 {
     for(var i in obj) {
@@ -274,36 +284,64 @@ function print_obj(obj)
     }
 }
 
-function do_recu(obj)
+function convert(obj,type)
 {
-    var cov=[],i=0;
-    for(pp in obj) {
-        if(pp instanceof Array) {
-            if(pp.length>0) {
-                do_recu(conv,pp);
-            }
+    var o;
+    
+    if(obj instanceof ArrayBuffer) {
+        var o1=CONVS[type].b2j(obj);
+        if(o1.len>0) {
+            var dv=new DataView(obj,o1.len);
+            var o2=convert(dv,dv.subtype);
+            
+            o=bin_join(o1,o2);
         }
         else {
+            o=o1;
+        }
+    }
+    else {
+            o=CONVS[type].j2b(obj);
+        }
+    }
+    
+    return o;
+}
+
+function mk_conv(cov,obj)
+{
+    for(var pp in obj) {
+        if(pp instanceof String) {
             var tp=obj.tp;
-            var st=obj.st;
-            var sl=get_slen(st);
             
             cov[tp]={};
+            cov[tp].js={};
             
             //init attr
-            cov[tp].js={};
-            //conv[j].sl=sl;        //struct length
-            for(var o in st) {
+            cov[tp].st=obj.st;
+            cov[tp].sl=get_slen(obj.st);        //struct length
+            
+            for(var o in obj.st) {
                 cov[tp].js[o]=null;
             }
+            cov[tp].js.type=tp;
             
             //bin to js
-            cov[tp].b2j=function(bin) {
+            cov[tp].b2j=function(bin,type) {
                 var js={},len=0;
+                var st=CONV[type].st;
                 for(var p in st) {
-                    var o=bin_rw('r',bin,len,st[p]);
-                    js[p]=o.v;
-                    len+=o.l;
+                    if(p instanceof Object) {
+                        js[p]=CONV[p.tp].st;
+                    }
+                    else if(p instanceof Array) {
+                        
+                    }
+                    else if(p instanceof String) {
+                        var o=bin_rw('r',bin,len,st[p]);
+                        js[p]=o.v;
+                        len+=o.l;
+                    }
                 }
                 
                 return js;
@@ -312,28 +350,39 @@ function do_recu(obj)
             //js to bin
             cov[tp].j2b=function(js) {
                 
-                var len=0;
-                var bin=new ArrayBuffer(slen);
+                var b1,b2,len=0;
+                var st=CONV[type].st;
+                var sl=CONV[type].sl;
+                
+                b1=new ArrayBuffer(slen);
                 for(var p in js) {
-                    var o=bin_rw('w',bin,len,st[p]);
-                    len+=o.l;
+                    if(p instanceof Object) {
+                        b2=cov[p.type].j2b(p);
+                    }
+                    else if(p instanceof Array) {
+                        
+                    }
+                    else if(p instanceof String) {
+                        var o=bin_rw('w',bin,len,st[p]);
+                        len+=o.l;
+                    }
                 }
                 
-                return bin;
+                return bin_join(b1,b2);
             };
+        }
+        else if(pp instanceof Array) {
+            if(pp.length>0) {
+                for(var i=0;i<pp.length;i++) {
+                    mk_conv(cov,pp[i]);
+                }
+            }
+        }
+        else if(pp instanceof Object) {
+            mk_conv(cov,pp);
         }
     }
     
-    return cov;
-}
-
-///////////////////////////////////
-function mk_conv(pkt) {
-    var conv=[];
-    
-    do_recu(conv,pkt);
-    //print_obj(pkt);
-        
     return conv;
 }
 
@@ -345,8 +394,18 @@ WS.MESG=tmp++;
 WS.CLOSE=tmp++;
 WS.ERROR=tmp++;
 
-var PKT_CONV=mk_conv(PKT);
-//var PAR_CONV=mk_conv(PARA);
+var CONVS=(function() {
+    var conv=[];
+    
+    mk_conv(conv,tp_hdr);
+    mk_conv(conv,tp_gain);
+    mk_conv(conv,tp_vol);
+    mk_conv(conv,tp_eq);
+    mk_conv(conv,tp_setup);
+    
+    return conv;
+}());
+
 
 var DATA=(function() {
     
@@ -355,15 +414,13 @@ var DATA=(function() {
     /////////////////////
     
     this.fn=[];
-    this.open=function(url) {
-        this._ws=new WebSocket(url);
-    }
-    
+    this.open=_open;
+    this.send=_send;
+    this.bind=_bind;
+    this.onevt=onevt;
     this.close=_close;
     
-    this.send=_send;
-    
-    this.setfn=function(e,fn) {
+    function _onevt(e,fn) {
         this.fn[e]=fn;
     }
     
@@ -373,6 +430,7 @@ var DATA=(function() {
     
     /////////////////////////////////
     function _unpack(bin) {
+        CONVS[TYPE.HDR].b2j();
         for(var i; i<CONV.length; i++) {
             var obj=CONV[i];
             
@@ -382,7 +440,7 @@ var DATA=(function() {
         //this.fn[tp]();    //通知界面刷新
     }
     function _onmsg(e) {
-        _unpack();
+        _unpack(e.data);
     }
     
     ///////////////////////////////
@@ -401,6 +459,22 @@ var DATA=(function() {
     function _close() {
         this._ws.close();
     }
+    
+    /*
+     *   recv_fn:收到二进制数据并转成js后需要调用
+                 的函数,比如设置界面刷新标记
+     *   send_fn:修改了js需要调用的函数,比如发送数据
+    */
+    function _bind(js,recv_fn,send_fn) {
+        if(js) {
+            //log(" js null!");
+            return;
+        }
+        
+        js.recv_fn=recv_fn;
+        js.send_fn=send_fn;
+    }
+    
     
     
     var url="ws://192.168.2.202:8899";
