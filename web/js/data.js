@@ -33,17 +33,19 @@ TYPE.PARAS=tmp++;
 //...
 
 var fix_t={//固定头
-    tp:TYPE.FIX,
+    tp:TYPE.HDR,
     st:{
-        magic:   'u32.1.num',   //魔术字
-        pack:    'u8.4.num',    //封包方式
+        magic:  'u32.1.num',   //魔术字
+        pack:   'u8.4.num',    //封包方式(1字节1类型)
+        iotype: 'u8.1.num',    //io类型
+        datype: 'u8.1.num',    //后面数据的类型
     }
 };
 
 
 /******数据类型定义 start******/
 //hdr:header
-var hdr0_t={//第1层
+var hdr_t={//第1层
     /*
             typedef struct {
                 u32 magic;
@@ -57,7 +59,7 @@ var hdr0_t={//第1层
     ptp:null,
     st:{
         iotype:  'u8.1.num',
-        subtype: 'u8.1.num',
+        datype: 'u8.1.num',
         len:     'u8.1.num',
     },
     data:null,
@@ -118,7 +120,7 @@ var paras_t={
 
 /******数据包格式定义 start******/
 var PACKET={
-    hdr:tp_hdr,
+    fix:fix_t,
     data:[
         tp_gain,
         tp_vol,
