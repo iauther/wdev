@@ -22,18 +22,28 @@ IO.WIFI=1<<tmp++;
 tmp=0;
 var TYPE=[];
 ///////////////
+TYPE.FIX=tmp++;
 TYPE.HDR=tmp++;
-
 TYPE.EQ=tmp++;
 TYPE.DYN=tmp++;
 TYPE.VOL=tmp++;
 TYPE.UPG=tmp++;
 TYPE.SETUP=tmp++;
+TYPE.PARAS=tmp++;
 //...
-TYPE.ALL=tmp++;
-///////////////
+
+var fix_t={//固定头
+    tp:TYPE.FIX,
+    st:{
+        magic:   'u32.1.num',   //魔术字
+        pack:    'u8.4.num',    //封包方式
+    }
+};
+
+
+/******数据类型定义 start******/
 //hdr:header
-var tp_hdr={//第1层
+var hdr0_t={//第1层
     /*
             typedef struct {
                 u32 magic;
@@ -44,16 +54,16 @@ var tp_hdr={//第1层
             }packet_t;
     */
     tp:TYPE.HDR,
+    ptp:null,
     st:{
-        magic:   'u8.1.num',    //port:'u8.1.str'
         iotype:  'u8.1.num',
         subtype: 'u8.1.num',
         len:     'u8.1.num',
-        data:    null,
     },
+    data:null,
 };
 
-var tp_gain={
+var gain_t={
     tp:TYPE.VOL,
     st:{
         value:   'u8.1.num',
@@ -61,7 +71,7 @@ var tp_gain={
     data:null,
 };
 
-var tp_vol={
+var vol_t={
     tp:TYPE.VOL,
     st:{
         port:   'u8.1.num',
@@ -71,7 +81,7 @@ var tp_vol={
     data:tp_gain,
 };
 
-var tp_eq={
+var eq_t={
     tp:TYPE.EQ,
     st:{
         aa: 'u8.1.num',
@@ -84,7 +94,7 @@ var tp_eq={
     ],
 };
 
-var tp_setup={
+var setup_t={
     tp:TYPE.SETUP,
     st:{
         cnt:'u16.1.num',
@@ -92,21 +102,32 @@ var tp_setup={
     data:null
 };
 
-
-var tp_all={
-    tp:TYPE.ALL,
+var paras_t={
+    tp:TYPE.PARAS,
     st:{
         ver:'u8.1.num',    //port:'u8.1.str'
         data:[//第2层帧头定义
-            tp_vol,
-            tp_eq,
-            tp_setup,
+            vol_t,
+            eq_t,
+            setup_t,
             //...
         ],
     },
 };
+/******数据类型定义 end******/
 
-
+/******数据包格式定义 start******/
+var PACKET={
+    hdr:tp_hdr,
+    data:[
+        tp_gain,
+        tp_vol,
+        tp_eq,
+        tp_setup,
+        tp_paras,
+    ],
+};
+/******数据包格式定义 end******/
 
 function bin_copy(bin)  {
     var dst = new ArrayBuffer(bin.byteLength);
@@ -227,11 +248,31 @@ function get_fn(rw,bin,prop)
     return fn;
 }
 
-function get_slen(s)
+function get_slen(st)
 {
     var len=0;
-    for(var p in s) {
-        len+=get_plen(s[p]);
+    for(var i in st) {
+        var pp=st[i];
+        if(pp instanceof String) {
+            len+=get_plen(pp);
+        }
+        else if(pp instanceof Array) {
+            for(var k=0;k<pp.length;k++) {
+                if(!pp[i].st) {
+                    //log("error, "+v.name+" not initialized");
+                    return 0;
+                }
+                len+=get_slen(pp[i].st);
+            }
+        }
+        else if(pp instanceof Object) {
+            if(!pp.st) {
+                //log("error, "+v.name+" not initialized");
+                return 0;
+            }
+            len+=get_slen(pp.st);
+        }
+        
     }
     
     return len;
@@ -284,33 +325,10 @@ function print_obj(obj)
     }
 }
 
-function convert(obj,type)
-{
-    var o;
-    
-    if(obj instanceof ArrayBuffer) {
-        var o1=CONVS[type].b2j(obj);
-        if(o1.len>0) {
-            var dv=new DataView(obj,o1.len);
-            var o2=convert(dv,dv.subtype);
-            
-            o=bin_join(o1,o2);
-        }
-        else {
-            o=o1;
-        }
-    }
-    else {
-            o=CONVS[type].j2b(obj);
-        }
-    }
-    
-    return o;
-}
-
 function mk_conv(cov,obj)
 {
-    for(var pp in obj) {
+    for(var i in obj) {
+        var pp=obj[i];
         if(pp instanceof String) {
             var tp=obj.tp;
             
@@ -337,10 +355,13 @@ function mk_conv(cov,obj)
                     else if(p instanceof Array) {
                         
                     }
-                    else if(p instanceof String) {
+                    else if(p instanceof Number) {
                         var o=bin_rw('r',bin,len,st[p]);
                         js[p]=o.v;
                         len+=o.l;
+                    }
+                    else if(p instanceof String) {
+                        
                     }
                 }
                 
@@ -357,14 +378,17 @@ function mk_conv(cov,obj)
                 b1=new ArrayBuffer(slen);
                 for(var p in js) {
                     if(p instanceof Object) {
-                        b2=cov[p.type].j2b(p);
+                        b2=cov[p.type].j2b(js[p]);
                     }
                     else if(p instanceof Array) {
                         
                     }
-                    else if(p instanceof String) {
+                    else if(p instanceof Number) {
                         var o=bin_rw('w',bin,len,st[p]);
                         len+=o.l;
+                    }
+                    else if(p instanceof String) {
+                        
                     }
                 }
                 
@@ -373,8 +397,8 @@ function mk_conv(cov,obj)
         }
         else if(pp instanceof Array) {
             if(pp.length>0) {
-                for(var i=0;i<pp.length;i++) {
-                    mk_conv(cov,pp[i]);
+                for(var k=0;k<pp.length;k++) {
+                    mk_conv(cov,pp[k]);
                 }
             }
         }
@@ -406,11 +430,20 @@ var CONVS=(function() {
     return conv;
 }());
 
+function mk_js(desc)
+{
+    
+}
+
+function mk_bin(desc)
+{
+    //var 
+}
 
 var DATA=(function() {
     
-    this.JS={};
-    this.BIN={};
+    this.js=mk_js(tp_all);
+    this.bin=mk_bin(tp_all);
     /////////////////////
     
     this.fn=[];
@@ -445,10 +478,7 @@ var DATA=(function() {
     
     ///////////////////////////////
     function _pack(js) {
-        var bin;
-        for(var i; i<CONV.length; i++) {
-            bin=CONV[tp].b2j(e.data);
-        }
+        var bin=CONV[js.tp].b2j(e.data);
         return bin;
     }
     function _send(js) {
