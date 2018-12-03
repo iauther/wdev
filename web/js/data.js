@@ -18,27 +18,32 @@ IO.UART=1<<tmp++;
 IO.ETH=1<<tmp++;
 IO.WIFI=1<<tmp++;
 
+var CONST={};
+C
+
+
+
 /////////////////////////////////////
 tmp=0;
-var TYPE=[];
+var PKT=[];
 ///////////////
-TYPE.FIX=tmp++;
-TYPE.HDR=tmp++;
-TYPE.EQ=tmp++;
-TYPE.DYN=tmp++;
-TYPE.VOL=tmp++;
-TYPE.UPG=tmp++;
-TYPE.SETUP=tmp++;
-TYPE.PARAS=tmp++;
+PKT.FIX=tmp++;
+PKT.HDR=tmp++;
+PKT.EQ=tmp++;
+PKT.DYN=tmp++;
+PKT.VOL=tmp++;
+PKT.UPG=tmp++;
+PKT.SETUP=tmp++;
+PKT.PARAS=tmp++;
 //...
 
 var fix_t={//固定头
-    tp:TYPE.HDR,
+    tp:PKT.FIX,
     st:{
-        magic:  'u32.1.num',   //魔术字
-        pack:   'u8.4.num',    //封包方式(1字节1类型)
-        iotype: 'u8.1.num',    //io类型
-        datype: 'u8.1.num',    //后面数据的类型
+        magic:  'u32.1.number',   //魔术字
+        pack:   'u8.4.number',    //封包方式(1字节1类型)
+        iotype: 'u8.1.number',    //io类型
+        datype: 'u8.1.number',    //后面数据的类型
     }
 };
 
@@ -47,26 +52,23 @@ var fix_t={//固定头
 //hdr:header
 var hdr_t={//第1层
     /*
-            typedef struct {
-                u32 magic;
-                u8  iotype;
-                u8  subtype;
-                u32 len;
-                u8  data[];
-            }packet_t;
+        typedef struct {
+            u8  datype;
+            u32 len;
+            u8  data[];
+        }packet_t;
     */
-    tp:TYPE.HDR,
+    tp:PKT.HDR,
     ptp:null,
     st:{
-        iotype:  'u8.1.num',
-        datype: 'u8.1.num',
-        len:     'u8.1.num',
+        datype:'u8.1.num',
+        len:   'u8.1.num',
     },
     data:null,
 };
 
 var gain_t={
-    tp:TYPE.VOL,
+    tp:PKT.VOL,
     st:{
         value:   'u8.1.num',
     },
@@ -74,25 +76,25 @@ var gain_t={
 };
 
 var vol_t={
-    tp:TYPE.VOL,
+    tp:PKT.VOL,
     st:{
-        port:   'u8.1.num',
-        type:   'u8.1.num',
-        flag:   'u8.1.num',
+        port:'u8.1.number',
+        type:'u8.1.number',
+        flag:'u8.1.number',
     },
-    data:tp_gain,
+    data:gain_t,
 };
 
 var eq_t={
     tp:TYPE.EQ,
     st:{
-        aa: 'u8.1.num',
-        bb: 'u8.1.num',
-        cc: 'u8.1.num',
-        len:'u32.1.num',
+        aa: 'u8.1.number',
+        bb: 'u8.1.number',
+        cc: 'u8.1.number',
+        len:'u32.1.number',
     },
     data:[
-        tp_gain,
+        //gain_t,
     ],
 };
 
@@ -108,8 +110,7 @@ var paras_t={
     tp:TYPE.PARAS,
     st:{
         ver:'u8.1.num',    //port:'u8.1.str'
-        data:[//第2层帧头定义
-            vol_t,
+        data:[
             eq_t,
             setup_t,
             //...
@@ -122,11 +123,10 @@ var paras_t={
 var PACKET={
     fix:fix_t,
     data:[
-        tp_gain,
-        tp_vol,
-        tp_eq,
-        tp_setup,
-        tp_paras,
+        vol_t,
+        eq_t,
+        setup_t,
+        paras_t,
     ],
 };
 /******数据包格式定义 end******/
@@ -200,10 +200,10 @@ function get_tlen(tp)
     }
 }
 
-//p:propty
-function get_plen(p)
+//prop:propty
+function get_plen(prop)
 {
-    var s=p.split('.');
+    var s=prop.split('.');
     var l=parseInt(s[1]);
     switch(s[0]) {
           case's8':
@@ -227,28 +227,126 @@ function get_plen(p)
 
 
 //暂未实现字符串,已预留作后续处理
-function get_fn(rw,bin,prop)
+function get_fx(pp,bin)
 {
-    var fn;
-    var s=prop.split('.');
+    var fx={},set,get,tl,dv;
+    var s=pp.split('.');
+    var l=parseInt(s[1]);
+    
     switch(s[0]) {
-          case's8' :fn=(rw=='r')?bin.getInt8:   bin.setInt8;   break;
-          case'u8' :fn=(rw=='r')?bin.getUint8:  bin.setUint8;  break;
-          case's16':fn=(rw=='r')?bin.getInt16:  bin.setInt16;  break;
-          case'u16':fn=(rw=='r')?bin.getUint16: bin.setUint16; break;
-          case's32':fn=(rw=='r')?bin.getInt32:  bin.setInt32;  break;
-          case'u32':fn=(rw=='r')?bin.getUint32: bin.setUint32; break;
-          case's64':fn=(rw=='r')?bin.getInt64:  bin.setInt64;  break;
-          case'u64':fn=(rw=='r')?bin.getUint64: bin.setUint64; break;
-          case'f32':fn=(rw=='r')?bin.getFloat32:bin.setFloat32;break;
-          case'f64':fn=(rw=='r')?bin.getFloat64:bin.setFloat64;break;
-          
-          default:
-          return null;
+        case's8':
+        {
+            tl=1*l;
+            b=bin?bin:new ArrayBuffer(tl);
+            dv=new DataView(b,0);
+            get=dv.getInt8;
+            set=dv.setInt8;
+        }
+        break;
+        
+        case'u8':
+        {
+            tl=1*l;
+            b=bin?bin:new ArrayBuffer(tl);
+            dv=new DataView(b,0);
+            get=dv.getUint8;
+            set=dv.setUint8;
+        }
+        break;
+        
+        case's16':
+        {
+            tl=2*l;
+            b=bin?bin:new ArrayBuffer(tl);
+            dv=new DataView(b,0);
+            get=dv.getInt16;
+            set=dv.setInt16;
+        }
+        break;
+        
+        case'u16':
+        {
+            tl=2*l;
+            b=bin?bin:new ArrayBuffer(tl);
+            dv=new DataView(b,0);
+            get=dv.getUint16;
+            set=dv.setUint16;
+        }
+        break;
+        
+        case's32':
+        {
+            tl=4*l;
+            b=bin?bin:new ArrayBuffer(tl);
+            dv=new DataView(b,0);
+            get=dv.getInt32;
+            set=dv.setInt32;
+        }
+        break;
+        
+        case'u32':
+        {
+            tl=4*l;
+            b=bin?bin:new ArrayBuffer(tl);
+            dv=new DataView(b,0);
+            get=dv.getUint32;
+            set=dv.setUint32;
+        }
+        break;
+        
+        case's64':
+        {
+            tl=8*l;
+            b=bin?bin:new ArrayBuffer(tl);
+            dv=new DataView(b,0);
+            get=dv.getInt64;
+            set=dv.getInt64;
+        }
+        break;
+        
+        case'u64':
+        {
+            tl=8*l;
+            b=bin?bin:new ArrayBuffer(tl);
+            dv=new DataView(b,0);
+            get=dv.getUint64;
+            set=dv.setUint64;
+        }
+        break;
+        
+        case'f32':
+        {
+            tl=4*l;
+            b=bin?bin:new ArrayBuffer(tl);
+            dv=new DataView(b,0);
+            get=dv.getFloat32;
+            set=dv.setFloat32;
+        }
+        break;
+        
+        case'f64':
+        {
+            tl=8*l;
+            b=bin?bin:new ArrayBuffer(tl);
+            dv=new DataView(b,0);
+            get=dv.getFloat64;
+            set=dv.setFloat64;
+        }
+        break;
+
+        default:
+        return null;
     }
     
-    return fn;
+    fx.b=b;
+    fx.tl=tl;
+    fx.dv=dv;
+    fx.get=get;
+    fx.set=set;
+    
+    return fx;
 }
+
 
 function get_slen(st)
 {
@@ -280,35 +378,39 @@ function get_slen(st)
     return len;
 }
 
-function bin_rw(rw,bin,offset,prop)
+function to_bin(prop,js)
 {
-    var o={};
-    var dv,fn;
-    dv=new DataView(bin,offset);
-    fn=get_fn(rw,dv,prop);
-    o.v=fn(0,true);
-    o.l=get_alen(prop);
-
-    return o;
+    var fx=get_fx(prop);
+    fx.set(0,js,true);
+    
+    return fx.b;
 }
 
-function bin_join(b1,b2)
+function to_js(prop,bin)
 {
-    if(!b1 && !b2) {
+    var js={};
+    var fx=get_fx(prop,bin);
+    
+    return fx.get(0,true);
+}
+
+
+function bin_concat(bs,l)
+{
+    if(bs.length<=0>) {
         return null;
     }
     
-    if(b1 && !b2) {
-        return b1;
+    var b=new ArrayBuffer(l);
+    for(var i=0,pos=0;i<bs.length;i++>) {
+        if(! bs[i] instanceof ArrayBuffer) {
+            continue;
+        }
+        
+        b.set(b+pos,b[i].byteLength);
+        pos += b[i].byteLength;
     }
     
-    if(b2 && !b1) {
-        return b2;
-    }
-    
-    var b=new ArrayBuffer(b1.byteLength+b2.byteLength);
-    b.set(b1,b1.byteLength);
-    b.set(b2,b1.byteLength);
     return b;
 }
 
@@ -321,11 +423,39 @@ function print_obj(obj)
                 print_obj(pp)
             }
         }
+        else if(pp instanceof Object) {
+            print_obj(pp);
+        }
         else {
             console.log(i+':'+pp);
         }
     }
 }
+
+//////////////////////////////////////////////////////////
+tmp=0;
+var WS={};
+WS.OPEN=tmp++;
+WS.MESG=tmp++;
+WS.CLOSE=tmp++;
+WS.ERROR=tmp++;
+
+function mk_level(js)
+{
+    var lv=[];
+    while(js.parent!=null) {
+        lv.push(js.tp);
+    }
+    lv.push(TYPE.HDR);
+    
+    return lv;
+}
+
+function mk_paras(bin)
+{
+    
+}
+
 
 function mk_conv(cov,obj)
 {
@@ -333,6 +463,11 @@ function mk_conv(cov,obj)
         var pp=obj[i];
         if(pp instanceof String) {
             var tp=obj.tp;
+            
+            if(cov[tp]) {
+                //log("warnning! cov["+tp+"] is already exist!\n");
+                continue;
+            }
             
             cov[tp]={};
             cov[tp].js={};
@@ -348,22 +483,30 @@ function mk_conv(cov,obj)
             
             //bin to js
             cov[tp].b2j=function(bin,type) {
+                var b=bin;
                 var js={},len=0;
                 var st=CONV[type].st;
                 for(var p in st) {
                     if(p instanceof Object) {
-                        js[p]=CONV[p.tp].st;
+                        js[p]=CONV[p.tp].b2j(b,p.tp);
+                        var st2=CONV[p.tp].st;
+                        b += get_slen(st2[p.tp]);
                     }
                     else if(p instanceof Array) {
-                        
+                        if(p.length>0) {
+                            for(i=0;i<p.length;i++) {
+                                js[p]=CONV[p.tp].b2j(b,p.tp);
+                                var st2=CONV[p.tp].st;
+                                b += get_slen(st2[p.tp]);
+                            }
+                        }
                     }
                     else if(p instanceof Number) {
-                        var o=bin_rw('r',bin,len,st[p]);
-                        js[p]=o.v;
-                        len+=o.l;
+                        js[p]=to_js(st[p],b);
+                        b += get_plen(st[p]);
                     }
                     else if(p instanceof String) {
-                        
+                        //
                     }
                 }
                 
@@ -373,28 +516,36 @@ function mk_conv(cov,obj)
             //js to bin
             cov[tp].j2b=function(js) {
                 
-                var b1,b2,len=0;
-                var st=CONV[type].st;
-                var sl=CONV[type].sl;
+                var bin=[];
+                var st=CONV[js.tp].st;
+                var sl=CONV[js.tp].sl;
                 
-                b1=new ArrayBuffer(slen);
-                for(var p in js) {
-                    if(p instanceof Object) {
-                        b2=cov[p.type].j2b(js[p]);
+                for(var i in js) {
+                    var p=js[i];
+                    if(p instanceof Number) {
+                        var b=to_bin(st[p],js[p]);
+                        bin.push(b);
+                    }
+                    else if(p instanceof Object) {
+                        var b=cov[p.type].j2b(js[p]);
+                        bin.push(b);
                     }
                     else if(p instanceof Array) {
-                        
-                    }
-                    else if(p instanceof Number) {
-                        var o=bin_rw('w',bin,len,st[p]);
-                        len+=o.l;
+                        if(p.length>0) {
+                            for(var k=0;k<p.length;k++) {
+                                if(p[k] instanceof Object) {
+                                    var b=cov[p[k].type].j2b(p[k]);
+                                    bin.push(b);
+                                }
+                            }
+                        }
                     }
                     else if(p instanceof String) {
                         
                     }
                 }
                 
-                return bin_join(b1,b2);
+                return bin_concat(m);
             };
         }
         else if(pp instanceof Array) {
@@ -411,26 +562,19 @@ function mk_conv(cov,obj)
     
     return conv;
 }
-
-//////////////////////////////////////////////////////////
-tmp=0;
-var WS={};
-WS.OPEN=tmp++;
-WS.MESG=tmp++;
-WS.CLOSE=tmp++;
-WS.ERROR=tmp++;
-
 var CONVS=(function() {
     var conv=[];
     
-    mk_conv(conv,tp_hdr);
-    mk_conv(conv,tp_gain);
-    mk_conv(conv,tp_vol);
-    mk_conv(conv,tp_eq);
-    mk_conv(conv,tp_setup);
+    mk_conv(conv,hdr_t);
+    mk_conv(conv,gain_t);
+    mk_conv(conv,vol_t);
+    mk_conv(conv,eq_t);
+    mk_conv(conv,setup_t);
+    mk_conv(conv,paras_t);
     
     return conv;
 }());
+
 
 function mk_js(desc)
 {
