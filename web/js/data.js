@@ -18,10 +18,6 @@ IO.UART=1<<tmp++;
 IO.ETH=1<<tmp++;
 IO.WIFI=1<<tmp++;
 
-var CONST={};
-C
-
-
 
 /////////////////////////////////////
 tmp=0;
@@ -59,7 +55,6 @@ var hdr_t={//第1层
         }packet_t;
     */
     tp:PKT.HDR,
-    ptp:null,
     st:{
         datype:'u8.1.num',
         len:   'u8.1.num',
@@ -86,7 +81,7 @@ var vol_t={
 };
 
 var eq_t={
-    tp:TYPE.EQ,
+    tp:PKT.EQ,
     st:{
         aa: 'u8.1.number',
         bb: 'u8.1.number',
@@ -99,7 +94,7 @@ var eq_t={
 };
 
 var setup_t={
-    tp:TYPE.SETUP,
+    tp:PKT.SETUP,
     st:{
         cnt:'u16.1.num',
     },
@@ -107,7 +102,7 @@ var setup_t={
 };
 
 var paras_t={
-    tp:TYPE.PARAS,
+    tp:PKT.PARAS,
     st:{
         ver:'u8.1.num',    //port:'u8.1.str'
         data:[
@@ -130,6 +125,12 @@ var PACKET={
     ],
 };
 /******数据包格式定义 end******/
+
+function log(s)
+{
+    console.log(s);
+}
+
 
 function bin_copy(bin)  {
     var dst = new ArrayBuffer(bin.byteLength);
@@ -159,7 +160,7 @@ function get_json(url)
     var o;
     var xhr=new XMLHttpRequest();
     xhr.open('GET',url,false);
-    xhr.timeout=function() {console.log("get"+url+"timeout");};
+    xhr.timeout=function() {log("get"+url+"timeout");};
     xhr.send(null);
     return JSON.parse(xhr.responseText);
 }
@@ -397,12 +398,12 @@ function to_js(prop,bin)
 
 function bin_concat(bs,l)
 {
-    if(bs.length<=0>) {
+    if(!bs || bs.length<=0) {
         return null;
     }
     
     var b=new ArrayBuffer(l);
-    for(var i=0,pos=0;i<bs.length;i++>) {
+    for(var i=0,pos=0;i<bs.length;i++) {
         if(! bs[i] instanceof ArrayBuffer) {
             continue;
         }
@@ -417,17 +418,18 @@ function bin_concat(bs,l)
 function print_obj(obj)
 {
     for(var i in obj) {
-        var pp=obj[i];
-        if(pp instanceof Array) {
-            if(pp.length>0) {
-                print_obj(pp)
+        var p=obj[i];
+        log("print:"+p);
+        if(p instanceof Array) {
+            for(var j=0;j<p.length;j++) {
+                print_obj(p)
             }
         }
-        else if(pp instanceof Object) {
-            print_obj(pp);
+        else if(p instanceof Object) {
+            print_obj(p);
         }
         else {
-            console.log(i+':'+pp);
+            log(i+':'+p);
         }
     }
 }
@@ -460,12 +462,13 @@ function mk_paras(bin)
 function mk_conv(cov,obj)
 {
     for(var i in obj) {
-        var pp=obj[i];
-        if(pp instanceof String) {
+        var p=obj[i];
+        log(i+":"+p);
+        if(p instanceof String) {
             var tp=obj.tp;
             
             if(cov[tp]) {
-                //log("warnning! cov["+tp+"] is already exist!\n");
+                log("warnning! cov["+tp+"] is already exist, skip it");
                 continue;
             }
             
@@ -493,12 +496,10 @@ function mk_conv(cov,obj)
                         b += get_slen(st2[p.tp]);
                     }
                     else if(p instanceof Array) {
-                        if(p.length>0) {
-                            for(i=0;i<p.length;i++) {
-                                js[p]=CONV[p.tp].b2j(b,p.tp);
-                                var st2=CONV[p.tp].st;
-                                b += get_slen(st2[p.tp]);
-                            }
+                        for(i=0;i<p.length;i++) {
+                            js[p]=CONV[p.tp].b2j(b,p.tp);
+                            var st2=CONV[p.tp].st;
+                            b += get_slen(st2[p.tp]);
                         }
                     }
                     else if(p instanceof Number) {
@@ -521,22 +522,20 @@ function mk_conv(cov,obj)
                 var sl=CONV[js.tp].sl;
                 
                 for(var i in js) {
-                    var p=js[i];
-                    if(p instanceof Number) {
-                        var b=to_bin(st[p],js[p]);
+                    var k=js[i];
+                    if(k instanceof Number) {
+                        var b=to_bin(st[k],js[k]);
                         bin.push(b);
                     }
-                    else if(p instanceof Object) {
-                        var b=cov[p.type].j2b(js[p]);
+                    else if(k instanceof Object) {
+                        var b=cov[k.type].j2b(js[k]);
                         bin.push(b);
                     }
-                    else if(p instanceof Array) {
-                        if(p.length>0) {
-                            for(var k=0;k<p.length;k++) {
-                                if(p[k] instanceof Object) {
-                                    var b=cov[p[k].type].j2b(p[k]);
-                                    bin.push(b);
-                                }
+                    else if(k instanceof Array) {
+                        for(var j=0;j<k.length;j++) {
+                            if(p[j] instanceof Object) {
+                                var b=cov[p[j].type].j2b(p[j]);
+                                bin.push(b);
                             }
                         }
                     }
@@ -548,55 +547,57 @@ function mk_conv(cov,obj)
                 return bin_concat(m);
             };
         }
-        else if(pp instanceof Array) {
-            if(pp.length>0) {
-                for(var k=0;k<pp.length;k++) {
-                    mk_conv(cov,pp[k]);
-                }
+        else if(p instanceof Array) {
+            for(var k=0;k<p.length;k++) {
+                mk_conv(cov,p[k]);
             }
         }
-        else if(pp instanceof Object) {
-            mk_conv(cov,pp);
+        else if(p instanceof Object) {
+            mk_conv(cov,p);
         }
     }
     
-    return conv;
+    return cov;
 }
 var CONVS=(function() {
     var conv=[];
     
+    log("bbbb");
     mk_conv(conv,hdr_t);
-    mk_conv(conv,gain_t);
-    mk_conv(conv,vol_t);
-    mk_conv(conv,eq_t);
-    mk_conv(conv,setup_t);
-    mk_conv(conv,paras_t);
+    //mk_conv(conv,gain_t);
+    //mk_conv(conv,vol_t);
+    //mk_conv(conv,eq_t);
+    //mk_conv(conv,setup_t);
+    //mk_conv(conv,paras_t);
+    
+    //log("aaaa:"+conv);
+    print_obj(conv);
     
     return conv;
 }());
 
 
-function mk_js(desc)
+function mk_js(p)
 {
     
 }
 
-function mk_bin(desc)
+function mk_bin(p)
 {
     //var 
 }
 
 var DATA=(function() {
     
-    this.js=mk_js(tp_all);
-    this.bin=mk_bin(tp_all);
+    this.js=mk_js(paras_t);
+    this.bin=mk_bin(paras_t);
     /////////////////////
     
     this.fn=[];
     this.open=_open;
     this.send=_send;
     this.bind=_bind;
-    this.onevt=onevt;
+    this.onevt=_onevt;
     this.close=_close;
     
     function _onevt(e,fn) {
@@ -653,14 +654,13 @@ var DATA=(function() {
     
     
     
-    var url="ws://192.168.2.202:8899";
-    var ws=new WebSocket(url);
-    
-    setInterval(send, 1000);
+    //var url="ws://192.168.2.202:8899";
+    //var ws=new WebSocket(url);
+    //setInterval(send, 1000);
     
     function send() {
         ws.send("___ ws test!");
-        console.log("__send");
+        log("__send");
     }
     
 }());

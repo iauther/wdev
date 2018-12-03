@@ -11,7 +11,7 @@ var log={
         
     }
     
-    this.clear=function() {
+    this.clr=function() {
         console.clear();
         for(var i=0;i<this.buf.length;i++>) {
             //
