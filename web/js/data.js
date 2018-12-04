@@ -23,7 +23,6 @@ IO.WIFI=1<<tmp++;
 tmp=0;
 var PKT=[];
 ///////////////
-PKT.FIX=tmp++;
 PKT.HDR=tmp++;
 PKT.EQ=tmp++;
 PKT.DYN=tmp++;
@@ -33,31 +32,16 @@ PKT.SETUP=tmp++;
 PKT.PARAS=tmp++;
 //...
 
-var fix_t={//固定头
-    tp:PKT.FIX,
-    st:{
-        magic:  'u32.1.number',   //魔术字
-        pack:   'u8.4.number',    //封包方式(1字节1类型)
-        iotype: 'u8.1.number',    //io类型
-        datype: 'u8.1.number',    //后面数据的类型
-    }
-};
-
-
 /******数据类型定义 start******/
 //hdr:header
 var hdr_t={//第1层
-    /*
-        typedef struct {
-            u8  datype;
-            u32 len;
-            u8  data[];
-        }packet_t;
-    */
     tp:PKT.HDR,
     st:{
-        datype:'u8.1.num',
-        len:   'u8.1.num',
+        magic:'u32.1.number',   //魔术字
+        pack: 'u8.4.number',    //封包方式(1字节1类型)
+        itype:'u8.1.number',    //io类型
+        dtype:'u8.1.number',    //data类型
+        dlen: 'u8.1.num',
     },
     data:null,
 };
@@ -116,7 +100,7 @@ var paras_t={
 
 /******数据包格式定义 start******/
 var PACKET={
-    fix:fix_t,
+    hdr:hdr_t,
     data:[
         vol_t,
         eq_t,
@@ -129,6 +113,26 @@ var PACKET={
 function log(s)
 {
     console.log(s);
+}
+
+function isNumber(o)
+{
+    return ((typeof o) === 'number');
+}
+
+function isString(o)
+{
+    return ((typeof o) === 'string');
+}
+
+function isArray(o)
+{
+    return Array.isArray(o);
+}
+
+function isObject(o)
+{
+    return (!o && (typeof o)==='object');
 }
 
 
@@ -352,26 +356,24 @@ function get_fx(pp,bin)
 function get_slen(st)
 {
     var len=0;
+    
+    if(!st) {
+        log("st not initialized");
+        return 0;
+    }
+    
     for(var i in st) {
-        var pp=st[i];
-        if(pp instanceof String) {
-            len+=get_plen(pp);
+        var p=st[i];
+        if(isString(p)) {
+            len+=get_plen(p);
         }
-        else if(pp instanceof Array) {
-            for(var k=0;k<pp.length;k++) {
-                if(!pp[i].st) {
-                    //log("error, "+v.name+" not initialized");
-                    return 0;
-                }
-                len+=get_slen(pp[i].st);
+        else if(isArray(p)) {
+            for(var k=0;j<p.length;j++) {
+                len+=get_slen(p[j].st);
             }
         }
-        else if(pp instanceof Object) {
-            if(!pp.st) {
-                //log("error, "+v.name+" not initialized");
-                return 0;
-            }
-            len+=get_slen(pp.st);
+        else if(isObject(p)) {
+            len+=get_slen(p.st);
         }
         
     }
@@ -415,17 +417,17 @@ function bin_concat(bs,l)
     return b;
 }
 
-function print_obj(obj)
+function print_obj(o)
 {
-    for(var i in obj) {
-        var p=obj[i];
-        log("print:"+p);
-        if(p instanceof Array) {
+    //var nm=(isObject(o))?(o.constructor.name):"";
+    for(var i in o) {
+        var p=o[i];
+        if(isArray(p)) {
             for(var j=0;j<p.length;j++) {
-                print_obj(p)
+                print_obj(p[j])
             }
         }
-        else if(p instanceof Object) {
+        else if(isObject(p)) {
             print_obj(p);
         }
         else {
@@ -459,56 +461,51 @@ function mk_paras(bin)
 }
 
 
-function mk_conv(cov,obj)
+function mk_conv(cov,obj,type)
 {
-    for(var i in obj) {
-        var p=obj[i];
-        log(i+":"+p);
-        if(p instanceof String) {
-            var tp=obj.tp;
-            
-            if(cov[tp]) {
-                log("warnning! cov["+tp+"] is already exist, skip it");
-                continue;
+    var i,j,p,tp=null;
+    
+    for(i in obj) {
+        p=obj[i];
+        if(i === 'tp') {
+            tp=p;
+        }
+        else if(i === 'st') {
+            if(!cov[tp]) {
+                cov[tp]={};
+                cov[tp].st=p;
+                cov[tp].sl=get_slen(p);
+                cov[tp].tp=tp;
             }
-            
-            cov[tp]={};
-            cov[tp].js={};
-            
-            //init attr
-            cov[tp].st=obj.st;
-            cov[tp].sl=get_slen(obj.st);        //struct length
-            
-            for(var o in obj.st) {
-                cov[tp].js[o]=null;
-            }
-            cov[tp].js.type=tp;
-            
+                    
             //bin to js
             cov[tp].b2j=function(bin,type) {
                 var b=bin;
                 var js={},len=0;
                 var st=CONV[type].st;
+                
+                js.tp=type;
                 for(var p in st) {
-                    if(p instanceof Object) {
-                        js[p]=CONV[p.tp].b2j(b,p.tp);
-                        var st2=CONV[p.tp].st;
-                        b += get_slen(st2[p.tp]);
+                    if(isNumber(p)) {
+                        js[p]=to_js(st[p],b);
+                        b+=get_plen(st[p]);
                     }
-                    else if(p instanceof Array) {
+                    else if(isString(p)) {
+                        //
+                    }
+                    else if(isArray(p)) {
                         for(i=0;i<p.length;i++) {
                             js[p]=CONV[p.tp].b2j(b,p.tp);
                             var st2=CONV[p.tp].st;
-                            b += get_slen(st2[p.tp]);
+                            b+=get_slen(st2[p.tp]);
                         }
                     }
-                    else if(p instanceof Number) {
-                        js[p]=to_js(st[p],b);
-                        b += get_plen(st[p]);
+                    else if(isObject(p)) {
+                        js[p]=CONV[p.tp].b2j(b,p.tp);
+                        var st2=CONV[p.tp].st;
+                        b+=get_slen(st2[p.tp]);
                     }
-                    else if(p instanceof String) {
-                        //
-                    }
+
                 }
                 
                 return js;
@@ -522,58 +519,58 @@ function mk_conv(cov,obj)
                 var sl=CONV[js.tp].sl;
                 
                 for(var i in js) {
-                    var k=js[i];
-                    if(k instanceof Number) {
-                        var b=to_bin(st[k],js[k]);
+                    var p=js[i];
+                    if(isNumber(p)) {
+                        var b=to_bin(st[p],js[p]);
                         bin.push(b);
                     }
-                    else if(k instanceof Object) {
-                        var b=cov[k.type].j2b(js[k]);
-                        bin.push(b);
+                    else if(isString(p)) {
+                        
                     }
-                    else if(k instanceof Array) {
-                        for(var j=0;j<k.length;j++) {
-                            if(p[j] instanceof Object) {
-                                var b=cov[p[j].type].j2b(p[j]);
+                    else if(isArray(p)) {
+                        for(var j=0;j<p.length;j++) {
+                            if(isObject(p[j])) {
+                                var b=cov[p[j].tp].j2b(p[j]);
                                 bin.push(b);
                             }
                         }
                     }
-                    else if(p instanceof String) {
-                        
-                    }
+                    else if(isObject(p)) {
+                        var b=cov[p.tp].j2b(js[p]);
+                        bin.push(b);
+                    } 
                 }
                 
-                return bin_concat(m);
+                return bin_concat(bin);
             };
         }
-        else if(p instanceof Array) {
-            for(var k=0;k<p.length;k++) {
-                mk_conv(cov,p[k]);
+        else if(i === 'data') {
+            if(isArray(p)) {
+                for(var j=0;j<p.length;j++) {
+                    mk_conv(cov,p[j],tp);
+                }
             }
-        }
-        else if(p instanceof Object) {
-            mk_conv(cov,p);
+            else if(isObject(p)) {
+                mk_conv(cov,p,tp);
+            }
         }
     }
     
     return cov;
 }
 var CONVS=(function() {
-    var conv=[];
+    var cv=[];
+    mk_conv(cv,hdr_t);
+    //mk_conv(cv,gain_t);
+    //mk_conv(cv,vol_t);
+    //mk_conv(cv,eq_t);
+    //mk_conv(cv,setup_t);
+    //mk_conv(cv,paras_t);
     
-    log("bbbb");
-    mk_conv(conv,hdr_t);
-    //mk_conv(conv,gain_t);
-    //mk_conv(conv,vol_t);
-    //mk_conv(conv,eq_t);
-    //mk_conv(conv,setup_t);
-    //mk_conv(conv,paras_t);
+    //print_obj(cv);
+    log(cv);
     
-    //log("aaaa:"+conv);
-    print_obj(conv);
-    
-    return conv;
+    return cv;
 }());
 
 
@@ -608,16 +605,22 @@ var DATA=(function() {
         this._ws=new WebSocket(url);
     }
     
+    function to_array(v,n)
+    {
+        var a=[];
+        for(var i=0;i<n;i++) {
+            a[i]=(v>>(8*i))&0xff;
+        }
+        
+        return a;
+    }
+    function at(bin,n)
+    {
+        return new DataView(bin,n);
+    }
     /////////////////////////////////
     function _unpack(bin) {
-        CONVS[TYPE.HDR].b2j();
-        for(var i; i<CONV.length; i++) {
-            var obj=CONV[i];
-            
-            CONV[i].b2j(e.data);
-        }
-        var js=CONV[tp].b2j(e.data);
-        //this.fn[tp]();    //通知界面刷新
+        return CONVS[TYPE.HDR].b2j(bin,TYPE.HDR);
     }
     function _onmsg(e) {
         _unpack(e.data);
@@ -625,7 +628,7 @@ var DATA=(function() {
     
     ///////////////////////////////
     function _pack(js) {
-        var bin=CONV[js.tp].b2j(e.data);
+        var bin=CONV[js.tp].j2b(js);
         return bin;
     }
     function _send(js) {
@@ -638,18 +641,15 @@ var DATA=(function() {
     }
     
     /*
-     *   recv_fn:收到二进制数据并转成js后需要调用
-                 的函数,比如设置界面刷新标记
-     *   send_fn:修改了js需要调用的函数,比如发送数据
+     *   update_fn:界面更新函数:通知ui刷新
     */
-    function _bind(js,recv_fn,send_fn) {
+    function _bind(js,update_fn) {
         if(js) {
             //log(" js null!");
             return;
         }
         
-        js.recv_fn=recv_fn;
-        js.send_fn=send_fn;
+        js.update_fn=update_fn;
     }
     
     
