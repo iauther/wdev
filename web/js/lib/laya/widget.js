@@ -1,10 +1,10 @@
 /*
  *  written by guohui, all right be reserved. 
- *  chengdu/sichuan/china. iauther@163.com
+ *  cd@sc, iauther@163.com
  *  2018/11/3 16:08:28
 */
 
-/*
+
 function object(o)
 {
     function F(){};
@@ -313,26 +313,6 @@ var Widget=(function() {
         
     }
     
-    //Stage.addChild(btn);
+    Stage.addChild(btn);
 })()
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

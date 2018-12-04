@@ -43,33 +43,27 @@ function myMenu(parent,area,txt,data)
 
 
 
-function loadAll()
+function loadRes(fn)
 {
     var flag=0;
     var imgs=[
-                "res/img/button.png",
-                "res/img/progressbar.png"
+                "./res/img/button.png",
+                "./res/img/progressbar.png",
             ];
-    Laya.loader.load(imgs, Laya.Handler.create(this, onLoaded));
-    
-    function onLoaded() {
-        flag=1;
-        console.log("____ all loaded");
-    }
+    Laya.loader.load(imgs, Laya.Handler.create(this,fn));
 }
-
-
-
 
 
 ////////////subedit///////////////
 function myFader(parent,area,txt,data)
 {
     var sp=new Laya.Sprite();
+    sp.pos(area.x,area.y);
+    sp.size(area.w,area.h);
     
-    var bt=new Laya.Button("./res/img/button.png","BTN0");
+    var bt=new Laya.Button("./res/img/progressbar.png","BTN0");
     //bt.pos(100, 40);
-    //bt.size(60, 30);
+    bt.size(area.w,area.h);
     bt.on(Laya.Event.MOUSE_DOWN, bt, onDown);
     bt.on(Laya.Event.MOUSE_UP,   bt, onUp);
     sp.addChild(bt);
@@ -221,7 +215,8 @@ function myUpgrade(area,txt,data)
 
 ///////////////////////////////////////////
 
-function myAll(){
+function myAll()
+{
     var i;
     
     var STAGE       = Laya.Stage;
@@ -235,15 +230,18 @@ function myAll(){
     Laya.stage.scaleMode  = STAGE.SCALE_SHOWALL;
     Laya.stage.screenMode = STAGE.SCREEN_HORIZONTAL;
     
-    loadAll();
     var st=Laya.stage;
     
-    //this.tt = new myTitle(st,   Area(200,200,600,400), data);
-    //this.mn = new myMenu(st,    Area(0,0,0,0), data);
-    //this.et = new myEdit(st,    Area(0,0,0,0), data);
-    //this.ug = new myUpgrade(st, Area(0,0,0,0), data);
+    loadRes(myinit);
+    function myinit() {
+        //this.tt = new myTitle(st,   Area(200,200,600,400), data);
+        //this.mn = new myMenu(st,    Area(0,0,0,0), data);
+        //this.et = new myEdit(st,    Area(0,0,0,0), data);
+        //this.ug = new myUpgrade(st, Area(0,0,0,0), data);
+        
+        var fd = new myFader(st,new Area(200,200,600,400),"fader");
+    }
     
-    var fd = new myFader(st,new Area(200,200,600,400),"fader");
 }
 
 
