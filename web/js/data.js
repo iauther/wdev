@@ -91,7 +91,6 @@ var paras_t={
 var PACKET={
     hdr:hdr_t,
     data:[
-        vol_t,
         eq_t,
         setup_t,
         paras_t,
@@ -357,7 +356,7 @@ function get_slen(st)
             len+=get_plen(p);
         }
         else if(isArray(p)) {
-            for(var k=0;j<p.length;j++) {
+            for(var j=0;j<p.length;j++) {
                 len+=get_slen(p[j].st);
             }
         }
@@ -470,7 +469,7 @@ function mk_conv(cov,obj,type)
             cov[tp].b2j=function(bin,type) {
                 var b=bin;
                 var js={},len=0;
-                var st=CONV[type].st;
+                var st=CONVS[type].st;
                 
                 js.tp=type;
                 for(var p in st) {
@@ -483,14 +482,14 @@ function mk_conv(cov,obj,type)
                     }
                     else if(isArray(p)) {
                         for(i=0;i<p.length;i++) {
-                            js[p]=CONV[p.tp].b2j(b,p.tp);
-                            var st2=CONV[p.tp].st;
+                            js[p]=CONVS[p.tp].b2j(b,p.tp);
+                            var st2=CONVS[p.tp].st;
                             b+=get_slen(st2[p.tp]);
                         }
                     }
                     else if(isObject(p)) {
-                        js[p]=CONV[p.tp].b2j(b,p.tp);
-                        var st2=CONV[p.tp].st;
+                        js[p]=CONVS[p.tp].b2j(b,p.tp);
+                        var st2=CONVS[p.tp].st;
                         b+=get_slen(st2[p.tp]);
                     }
 
@@ -503,8 +502,8 @@ function mk_conv(cov,obj,type)
             cov[tp].j2b=function(js) {
                 
                 var bin=[];
-                var st=CONV[js.tp].st;
-                var sl=CONV[js.tp].sl;
+                var st=CONVS[js.tp].st;
+                var sl=CONVS[js.tp].sl;
                 
                 for(var i in js) {
                     var p=js[i];
@@ -548,15 +547,15 @@ function mk_conv(cov,obj,type)
 }
 var CONVS=(function() {
     var cv=[];
+    
     mk_conv(cv,hdr_t);
-    //mk_conv(cv,gain_t);
-    //mk_conv(cv,vol_t);
-    //mk_conv(cv,eq_t);
-    //mk_conv(cv,setup_t);
-    //mk_conv(cv,paras_t);
+    mk_conv(cv,gain_t);
+    mk_conv(cv,eq_t);
+    mk_conv(cv,setup_t);
+    mk_conv(cv,paras_t);
     
     //print_obj(cv);
-    log(cv);
+    //log(cv);
     
     return cv;
 }());
@@ -573,23 +572,28 @@ function mk_bin(p)
 }
 
 var DATA=(function() {
-    
-    this.paras=null;
+    var d={};
+    d.paras=null;
     /////////////////////
     
-    this.fn=[];
-    this.open=_open;
-    this.send=_send;
-    this.bind=_bind;
-    this.onevt=_onevt;
-    this.close=_close;
+    d.fn=[];
+    d.open=_open;
     
     function _onevt(e,fn) {
-        this.fn[e]=fn;
+        d.fn[e]=fn;
     }
     
     function _open(url) {
-        this._ws=new WebSocket(url);
+        d._ws=new WebSocket(url);
+        if(d._ws) {
+            
+            d.send=_send;
+            d.bind=_bind;
+            d.onevt=_onevt;
+            d.close=_close;
+            
+            d._ws.onmessage=_onmsg;
+        }
     }
     
     function to_array(v,n)
@@ -606,7 +610,9 @@ var DATA=(function() {
         return CONVS[TYPE.HDR].b2j(bin,TYPE.HDR);
     }
     function _onmsg(e) {
+        
         var hdr=_unpack(e.data);
+        log("dtype:"+hdr.dtype);
         switch(hdr.dtype) {
             case TYPE.GAIN:
             var g=hdr.data;
@@ -628,7 +634,7 @@ var DATA=(function() {
     
     ///////////////////////////////
     function _pack(js) {
-        var bin=CONV[js.tp].j2b(js);
+        var bin=CONVS[js.tp].j2b(js);
         return bin;
     }
     function _send(js) {
@@ -652,6 +658,7 @@ var DATA=(function() {
         js.update_fn=update_fn;
     }
     
+    return d;
 }());
 
 

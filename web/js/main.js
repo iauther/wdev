@@ -222,9 +222,11 @@ function myAll()
     Laya.stage.screenMode = STAGE.SCREEN_HORIZONTAL;
     
     var st=Laya.stage;
-    var url="ws://192.168.4.1:8191"
+    //var url="ws://192.168.4.1:8191"
+    var url="ws://192.168.2.106:8191"
     
-    loadRes(myinit);
+    loadRes();
+    log(DATA);
     DATA.open(url);
     
     Laya.timer.loop(100, this, paras_chk);
@@ -243,6 +245,7 @@ function myAll()
         //this.ug = new myUpgrade(st, Area(0,0,0,0), data);
         
         var fd = new myFader(st,new Area(200,200,600,400),"fader", DATA.paras.eq.g);
+        log("myInit");
     }
     
 }
