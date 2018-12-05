@@ -1,39 +1,7 @@
 #ifndef __DATA_H__
 #define __DATA_H__
 
-#include "type.h"
-
-#define LOG printf
-#define HTTP_PORT 80
-#define WS_PORT   8191
-
-#define TTY_PATH "/dev/ttyS2"
-typedef struct
-{
-	int  	port;
-	int  	speed;
-	int  	bits;
-	int 	evts;
-	int  	stops;
-}ttycfg_t;
-
-
-enum {
-    LOCK_WS = 0,
-    LOCK_NUM
-};
-
-int http_init();
-
-int http_free();
-
-int ws_init();
-
-int ws_free();
-
-////////////////////////////////////
-
-
+#include "types.h"
 
 #define MAGIC   0xff8899aa
 #define IO_BT   (1<<0)
@@ -59,29 +27,29 @@ typedef struct {
     s16 value;
 }gain_t;
 
-var eq_t={
+typedef struct {
     u8      aa;
     u8      bb;
     gain_t  g;
-};
+}eq_t;
 
-var setup_t={
+typedef struct {
     u8      lang;
     u16     cnt;
-};
+}setup_t;
 
-var paras_t={
+typedef struct {
     u8      ver;
     eq_t    eq;
     setup_t setup;
-};
+}paras_t;
 
 
 typedef struct {
     u32 magic;
-    u8  pack[4];
-    u8  itype;
-    u8  dtype;
+    u32 pack;
+    u32 itype;
+    u32 dtype;
     u32 dlen;
     u8  data[];
 }hdr_t;

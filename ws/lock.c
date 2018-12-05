@@ -1,4 +1,4 @@
-#include "hdr.h"
+#include "inc.h"
 
 
 static lock_t mlock = {0};

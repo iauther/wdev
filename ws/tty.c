@@ -2,7 +2,7 @@
 #include <sys/stat.h>
 #include <termios.h>
 
-#include "data.h"
+#include "inc.h"
 
 
 static int set_opt(int fd, ttycfg_t *cfg)
@@ -14,7 +14,7 @@ static int set_opt(int fd, ttycfg_t *cfg)
         return -1;
     }
     
-    bzero(&newtio, sizeof( newtio ) );
+    memset(&newtio, 0, sizeof( newtio ));
     newtio.c_cflag  |=  CLOCAL | CREAD; 
     newtio.c_cflag &= ~CSIZE;
 

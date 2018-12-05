@@ -1,14 +1,15 @@
 #include <string.h>
+#include "inc.h"
 #include "data.h"
-
+#include "mg.h"
 
 static mg_mgr_t mgr2;
 static paras_t mparas={
-    .ver=8;
+    .ver=11,
     .eq={
-        .aa=8;
-        .bb=9;
-        .gain={
+        .aa=8,
+        .bb=9,
+        .g={
             .value=25,
         },
     },
@@ -20,7 +21,6 @@ static paras_t mparas={
 
 static int ws_send_paras(mg_conn_t *nc);
 
-
 static int is_websocket(mg_conn_t *conn) {
     int r;
     
@@ -29,24 +29,12 @@ static int is_websocket(mg_conn_t *conn) {
     return r;
 }
 
-
-
-static int ws_proc(mg_conn_t *conn, void *data, int len)
-{
-    
-    LOG("_____ %s\n", (char *)data);
-    
-    return 0;
-}
-
-
 static int ws_write(mg_conn_t *conn, void *data, int len)
 {
     mg_send_websocket_frame(conn, WEBSOCKET_OP_BINARY, data, len);
     
     return 0;
 }
-
 
 static void ws_proc(mg_conn_t *nc, void *data, int len)
 {
@@ -57,7 +45,7 @@ static void ws_proc(mg_conn_t *nc, void *data, int len)
         case TYPE_GAIN:
         {
             if(hdr->dlen<=sizeof(gain_t)) {
-                LOG(TAG, "gain length error");
+                LOG("gain length error");
                 return;
             }
             
@@ -99,7 +87,7 @@ static void ev_handler(mg_conn_t *nc, int ev, void *p)
 
         case MG_EV_WEBSOCKET_FRAME:
         {
-            ws_proc(conn, wm->data, wm->size);
+            ws_proc(nc, wm->data, wm->size);
         }
         break;
 
@@ -175,7 +163,7 @@ static int do_pack(int type, void *data, int len)
     
     l = len+sizeof(hdr_t);
     if(l>sizeof(tmpbuf)) {
-        LOG(TAG, "pack len overflow!");
+        LOG("pack len overflow!");
         return -1;
     }
     
@@ -192,8 +180,8 @@ int ws_send(mg_conn_t *nc, int type, void *data, int len)
 {
     int l;
     
-    l = do_pack(data, len);
-    ws_write(conn, tmpbuf, l);
+    l = do_pack(type, data, len);
+    ws_write(nc, tmpbuf, l);
     
     return 0;
 }

@@ -1,4 +1,5 @@
-#include "data.h"
+#include "inc.h"
+#include "mg.h"
 
 static mg_mgr_t mgr1;
 static mg_httpopt_t mopt;

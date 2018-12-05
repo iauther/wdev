@@ -1,9 +1,9 @@
-#include <sys/epoll.h>
-#include "hdr.h"
+//#include <sys/epoll.h>
+#include "inc.h"
 
 
 
-
+#if 0
 enum {
    DEV_TTY = 0,
    DEV_NUM 
@@ -34,7 +34,7 @@ static int epoll_add(int ep, int fd, long evts)
     
     return 0;
 }
-
+#endif
 
 
 int main(int argc, char **argv)
@@ -42,6 +42,7 @@ int main(int argc, char **argv)
     int fd;
     int i,nfds;
     char tmp[2000];
+#if 0
     struct epoll_event events[DEV_NUM];
     
     m_ep = epoll_create(DEV_NUM);
@@ -51,13 +52,15 @@ int main(int argc, char **argv)
         LOG("___ tty open failed\n");
     }
     epoll_add(m_ep, fd, EPOLLIN|EPOLLOUT);
+#endif    
     
-    
-    web_init();
+    http_init();
     ws_init();
     
     while (1) {
         
+        sleep(2000);
+        #if 0
         nfds = epoll_wait(m_ep, events, DEV_NUM, 0);
         for(i=0; i<nfds; i++) {
             fd = events[i].data.fd;
@@ -67,6 +70,7 @@ int main(int argc, char **argv)
                 //LOG("______ tty something...\n");
             }
         }
+        #endif
     }
    
     
