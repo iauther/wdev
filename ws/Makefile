@@ -22,11 +22,11 @@ STRIP = $(BIN_DIR)/$(BIN_PRE)strip
 
 IDIRS  += . 
 
-CFILES += web.c \
-          ws.c \
-          tty.c \
+CFILES += tty.c \
           lock.c \
-          mongoose.c \
+          mg.c \
+          ws.c \
+          http.c \
           main.c
 
 COBJS = $(addprefix $(BLD_DIR)/,$(CFILES:.c=.o))

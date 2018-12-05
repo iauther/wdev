@@ -1,6 +1,4 @@
-
-
-#include "hdr.h"
+#include "data.h"
 
 static mg_mgr_t mgr1;
 static mg_httpopt_t mopt;
@@ -17,10 +15,10 @@ static void ev_handler(mg_conn_t *conn, int ev, void *p) {
 }
 
 
-static void* web_entry(void *arg)
+static void* http_entry(void *arg)
 {
     while(1) {
-        mg_mgr_poll(&mgr1, 50);
+        mg_mgr_poll(&mgr1, 500);
     }
     
     LOG("___ web_loop quit\n");
@@ -29,7 +27,7 @@ static void* web_entry(void *arg)
 }
 
 
-int web_init()
+int http_init()
 {
     int r;
     char port[20];
@@ -52,13 +50,13 @@ int web_init()
 
     mg_set_protocol_http_websocket(conn);
     
-    r = pthread_create(&id, NULL, web_entry, NULL);
+    r = pthread_create(&id, NULL, http_entry, NULL);
     
     return r;
 }
 
 
-int web_free()
+int http_free()
 {
     mg_mgr_free(&mgr1);
     //pthread_kill();

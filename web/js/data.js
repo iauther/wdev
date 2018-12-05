@@ -21,72 +21,61 @@ IO.WIFI=1<<tmp++;
 
 /////////////////////////////////////
 tmp=0;
-var PKT=[];
+var TYPE=[];
 ///////////////
-PKT.HDR=tmp++;
-PKT.EQ=tmp++;
-PKT.DYN=tmp++;
-PKT.VOL=tmp++;
-PKT.UPG=tmp++;
-PKT.SETUP=tmp++;
-PKT.PARAS=tmp++;
+TYPE.HDR=tmp++;
+TYPE.GAIN=tmp++;
+TYPE.EQ=tmp++;
+TYPE.DYN=tmp++;
+TYPE.UPG=tmp++;
+TYPE.SETUP=tmp++;
+TYPE.PARAS=tmp++;
 //...
 
 /******数据类型定义 start******/
 //hdr:header
 var hdr_t={//第1层
-    tp:PKT.HDR,
+    tp:TYPE.HDR,
     st:{
         magic:'u32.1.number',   //魔术字
         pack: 'u8.4.number',    //封包方式(1字节1类型)
         itype:'u8.1.number',    //io类型
         dtype:'u8.1.number',    //data类型
-        dlen: 'u8.1.num',
+        dlen: 'u32.1.num',
     },
     data:null,
 };
 
 var gain_t={
-    tp:PKT.VOL,
+    tp:TYPE.GAIN,
     st:{
-        value:   'u8.1.num',
+        value:   's16.1.num',
     },
     data:null,
 };
 
-var vol_t={
-    tp:PKT.VOL,
-    st:{
-        port:'u8.1.number',
-        type:'u8.1.number',
-        flag:'u8.1.number',
-    },
-    data:gain_t,
-};
-
 var eq_t={
-    tp:PKT.EQ,
+    tp:TYPE.EQ,
     st:{
         aa: 'u8.1.number',
         bb: 'u8.1.number',
-        cc: 'u8.1.number',
-        len:'u32.1.number',
     },
     data:[
-        //gain_t,
+        gain_t,
     ],
 };
 
 var setup_t={
-    tp:PKT.SETUP,
+    tp:TYPE.SETUP,
     st:{
+        lang:'u8.1.num',
         cnt:'u16.1.num',
     },
     data:null
 };
 
 var paras_t={
-    tp:PKT.PARAS,
+    tp:TYPE.PARAS,
     st:{
         ver:'u8.1.num',    //port:'u8.1.str'
         data:[
@@ -397,7 +386,6 @@ function to_js(prop,bin)
     return fx.get(0,true);
 }
 
-
 function bin_concat(bs,l)
 {
     if(!bs || bs.length<=0) {
@@ -586,8 +574,7 @@ function mk_bin(p)
 
 var DATA=(function() {
     
-    this.js=mk_js(paras_t);
-    this.bin=mk_bin(paras_t);
+    this.paras=null;
     /////////////////////
     
     this.fn=[];
@@ -614,16 +601,29 @@ var DATA=(function() {
         
         return a;
     }
-    function at(bin,n)
-    {
-        return new DataView(bin,n);
-    }
     /////////////////////////////////
     function _unpack(bin) {
         return CONVS[TYPE.HDR].b2j(bin,TYPE.HDR);
     }
     function _onmsg(e) {
-        _unpack(e.data);
+        var hdr=_unpack(e.data);
+        switch(hdr.dtype) {
+            case TYPE.GAIN:
+            var g=hdr.data;
+            log("____gain:"+g.value);
+            break;
+            
+            case TYPE.EQ:
+            break;
+            
+            case TYPE.SETUP:
+            break;
+            
+            case TYPE.PARAS:
+            DATA.paras=o.data;
+            //ui refresh ?
+            break;  
+        }
     }
     
     ///////////////////////////////
@@ -650,17 +650,6 @@ var DATA=(function() {
         }
         
         js.update_fn=update_fn;
-    }
-    
-    
-    
-    //var url="ws://192.168.2.202:8899";
-    //var ws=new WebSocket(url);
-    //setInterval(send, 1000);
-    
-    function send() {
-        ws.send("___ ws test!");
-        log("__send");
     }
     
 }());

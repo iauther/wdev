@@ -2,7 +2,7 @@
 #include <sys/stat.h>
 #include <termios.h>
 
-#include "hdr.h"
+#include "data.h"
 
 
 static int set_opt(int fd, ttycfg_t *cfg)

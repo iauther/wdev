@@ -1,8 +1,25 @@
 #include <string.h>
-#include "hdr.h"
+#include "data.h"
 
 
 static mg_mgr_t mgr2;
+static paras_t mparas={
+    .ver=8;
+    .eq={
+        .aa=8;
+        .bb=9;
+        .gain={
+            .value=25,
+        },
+    },
+    .setup={
+        .lang=1,
+        .cnt=2,
+    },
+};
+
+static int ws_send_paras(mg_conn_t *nc);
+
 
 static int is_websocket(mg_conn_t *conn) {
     int r;
@@ -31,37 +48,70 @@ static int ws_write(mg_conn_t *conn, void *data, int len)
 }
 
 
-static void ev_handler(mg_conn_t *conn, int ev, void *ev_data)
+static void ws_proc(mg_conn_t *nc, void *data, int len)
 {
-       
+    hdr_t *hdr=data;
+    
+    switch(hdr->dtype) {
+        
+        case TYPE_GAIN:
+        {
+            if(hdr->dlen<=sizeof(gain_t)) {
+                LOG(TAG, "gain length error");
+                return;
+            }
+            
+            gain_t *g=hdr->data;
+            LOG("_____gain.value: %d\n", g->value);
+        }
+        break;
+        
+        case TYPE_EQ:
+        {
+        }
+        break;
+        
+        case TYPE_DYN:
+        break;
+        
+        case TYPE_SETUP:
+        break;
+        
+        case TYPE_PARAS:
+        break;
+        
+        default:
+        return;
+        break;
+        
+    }  
+}
+
+static void ev_handler(mg_conn_t *nc, int ev, void *p)
+{
+    mg_wsmsg_t *wm=(mg_wsmsg_t*)p;
     switch (ev) {
         case MG_EV_WEBSOCKET_HANDSHAKE_DONE:
         {
-            //LOG("connected", conn);
+            ws_send_paras(nc);
         }
         break;
-        
+
         case MG_EV_WEBSOCKET_FRAME:
         {
-            mg_wsmsg_t *wm = (mg_wsmsg_t *)ev_data;
-            
-            LOG("_____ ws->size: %d\n", wm->size);
-            //ws_proc(conn, wm->data, wm->size);
-            
+            ws_proc(conn, wm->data, wm->size);
         }
         break;
-        
+
         case MG_EV_TIMER:
         {
             
         }
         break;
-        
+
         case MG_EV_CLOSE:
         {
-            if (is_websocket(conn)) {
-                //LOG("closed", conn);
-            }
+            
         }
         break;
     }
@@ -71,9 +121,9 @@ static void ev_handler(mg_conn_t *conn, int ev, void *ev_data)
 static void* ws_entry(void *arg)
 {
     while(1) {
-        lock_on(LOCK_WS);
-        mg_mgr_poll(&mgr2, 0);
-        lock_off(LOCK_WS);
+        //lock_on(LOCK_WS);
+        mg_mgr_poll(&mgr2, 1000);
+        //lock_off(LOCK_WS);
     }
     LOG("___ ws_loop quit\n");
     
@@ -117,64 +167,39 @@ int  ws_free()
 }
 
 
-int ws_send(mg_conn_t *conn, hdr_t *hdr)
+static char tmpbuf[500];
+static int do_pack(int type, void *data, int len)
 {
     int l;
-    char *p;
+    hdr_t *hdr=(hdr_t*)tmpbuf;
     
-    if (!hdr) {
-        LOG("___ ws_send wrong paras\n");
+    l = len+sizeof(hdr_t);
+    if(l>sizeof(tmpbuf)) {
+        LOG(TAG, "pack len overflow!");
         return -1;
     }
     
-    l = hdr->dlen+sizeof(hdr_t);
-    p = malloc(l);
-    if (!p) {
-        return -1;
-    }
-    memcpy(p, hdr, sizeof(hdr_t));
+    hdr->magic = MAGIC;
+    //hdr->pack[0] = 0;
+    hdr->itype = IO_WIFI;
+    hdr->dtype = type;
+    hdr->dlen = len;
     
-    lock_on(LOCK_WS);
-    ws_write(conn, p, l);
-    lock_off(LOCK_WS);
+    memcpy((void*)hdr->data, data, len);
+    return l;
+}
+int ws_send(mg_conn_t *nc, int type, void *data, int len)
+{
+    int l;
     
-    free(p);
+    l = do_pack(data, len);
+    ws_write(conn, tmpbuf, l);
     
     return 0;
 }
 
 
-int ws_broadcast(mg_conn_t *conn, hdr_t *hdr)
+static int ws_send_paras(mg_conn_t *nc)
 {
-    int l;
-    char *p;
-    int r=-1;
-    mg_conn_t *c;
-    
-    if (!hdr) {
-        LOG("___ ws_broadcast wrong paras\n");
-        return -1;
-    }
-    
-    l = hdr->dlen+sizeof(hdr_t);
-    p = malloc(l);
-    if (!p) {
-        return -1;
-    }
-    memcpy(p, hdr, sizeof(hdr_t));
-    
-    lock_on(LOCK_WS);
-    for (c = mg_next(&mgr2, NULL); c != NULL; c = mg_next(&mgr2, c)) {
-        if (c==conn) {
-            continue;
-        }
-        
-        ws_write(c, p, l);
-        r = 0;
-    }
-    lock_off(LOCK_WS);
-    
-    free(p);
-    
-    return r;
+    return ws_send(nc, TYPE_PARAS, (void*)&mparas, sizeof(paras_t));
 }
