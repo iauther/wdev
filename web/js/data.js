@@ -1,5 +1,5 @@
 var tmp=0;
-var MAGIC=0xff338855
+var MAGIC=0xffeebbaa
 
 tmp=0;
 var RW={};
@@ -38,10 +38,10 @@ var hdr_t={//第1层
     tp:TYPE.HDR,
     st:{
         magic:'u32.1.number',   //魔术字
-        pack: 'u8.4.number',    //封包方式(1字节1类型)
-        itype:'u8.1.number',    //io类型
-        dtype:'u8.1.number',    //data类型
-        dlen: 'u32.1.num',
+        pack: 'u32.1.number',    //封包方式(1字节1类型)
+        itype:'u32.1.number',   //io类型
+        dtype:'u32.1.number',   //data类型
+        dlen: 'u32.1.number',
     },
     data:null,
 };
