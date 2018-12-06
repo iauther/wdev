@@ -281,9 +281,6 @@ function mk_conv(cov,obj)
     
     for(i in obj) {
         p=obj[i];
-        
-        
-        
         if(isString(p)) {
             //log(i+":"+p); 
             cov[tp].tlen+=get_plen(p); 
@@ -371,10 +368,10 @@ var CONVS=(function() {
     var cv=[];
     
     mk_conv(cv,hdr_t);
-    //mk_conv(cv,gain_t);
-    //mk_conv(cv,eq_t);
-    //mk_conv(cv,setup_t);
-    //mk_conv(cv,paras_t);
+    mk_conv(cv,gain_t);
+    mk_conv(cv,eq_t);
+    mk_conv(cv,setup_t);
+    mk_conv(cv,paras_t);
     
     //print_obj(cv);
     //log(cv);
