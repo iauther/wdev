@@ -107,13 +107,6 @@ function isObject(o)
 }
 
 
-function bin_copy(bin)  {
-    var dst = new ArrayBuffer(bin.byteLength);
-    new Uint8Array(dst).set(new Uint8Array(bin));
-    return dst;
-}
-
-
 function to_bin(str){
     var bin = [];
     var list = str.split("");
@@ -130,30 +123,15 @@ function to_bin(str){
 }
 
 
-function get_json(url)
+function xhr_get(url,type,sync)
 {
     var o;
     var xhr=new XMLHttpRequest();
+    xhsr.responseType=type;       //arraybuffer blob document json text
     xhr.open('GET',url,false);
     xhr.timeout=function() {log("get"+url+"timeout");};
     xhr.send(null);
     return JSON.parse(xhr.responseText);
-}
-
-
-function get_cnt(obj){
-    var tp = typeof obj;
-    if(tp == "string"){
-        return obj.length;
-    }else if(tp == "object"){
-        var cnt=0;
-        for(var i in obj){
-            cnt++;
-        }
-        return cnt;
-    }
-    
-    return 0;
 }
 
 
