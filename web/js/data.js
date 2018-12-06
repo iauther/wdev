@@ -20,6 +20,18 @@ IO.WIFI=1<<tmp++;
 
 
 /////////////////////////////////////
+var FUNS=[];
+FUNS['s8' ]={nm:'s8', tp:'Int8Array',   sz:1,get:'getInt8',   set:'setInt8'   };
+FUNS['u8' ]={nm:'u8', tp:'Uint8Array',  sz:1,get:'getUint8',  set:'setUint8'  };
+FUNS['s16']={nm:'s16',tp:'Int16Array',  sz:2,get:'getInt16',  set:'setInt16'  };
+FUNS['u16']={nm:'u16',tp:'Uint16Array', sz:2,get:'getUint16', set:'setUint16' };
+FUNS['s32']={nm:'s32',tp:'Int32Array',  sz:4,get:'getInt32',  set:'setInt32'  };
+FUNS['u32']={nm:'u32',tp:'Uint32Array', sz:4,get:'getUint32', set:'setUint32' };
+FUNS['f32']={nm:'f32',tp:'Float32Array',sz:4,get:'getFloat32',set:'setFloat32'};
+FUNS['f64']={nm:'f64',tp:'Float64Array',sz:8,get:'getFloat64',set:'setFloat64'};
+
+
+/////////////////////////////////////
 tmp=0;
 var TYPE=[];
 ///////////////
@@ -144,172 +156,28 @@ function get_cnt(obj){
     return 0;
 }
 
-//get type len
-function get_tlen(tp)
-{
-    switch(tp) {
-      case's8': return 1;
-      case'u8': return 1;
-      case's16':return 2;
-      case'u16':return 2;
-      case's32':return 4;
-      case'u32':return 4;
-      case's64':return 8;
-      case'u64':return 8;
-      case'f32':return 4;
-      case'f64':return 8;
-      
-      default:
-      return -1;
-    }
-}
 
 //prop:propty
 function get_plen(prop)
 {
     var s=prop.split('.');
     var l=parseInt(s[1]);
-    switch(s[0]) {
-      case's8':
-      case'u8': return 1*l;
-      
-      case's16':
-      case'u16':return 2*l;
-      
-      case's32':
-      case'u32':
-      case'f32':return 4*l;
-      
-      case's64':
-      case'u64':
-      case'f64':return 8*l;
-      
-      default:
-      return 0;
-    }
+    
+    return FUNS[s[0]].sz*l;
 }
 
 
 //暂未实现字符串,已预留作后续处理
-function get_fx(pp,bin)
+function info(pp)
 {
-    var fx={},rd,wt,tl,dv;
+    var f={};
     var s=pp.split('.');
-    var l=parseInt(s[1]);
+    var n=parseInt(s[1]);
     
-    switch(s[0]) {
-        case's8':
-        {
-            tl=1*l;
-            b=bin?bin:new ArrayBuffer(tl);
-            dv=new DataView(b,0);
-            rd=dv.getInt8;
-            wt=dv.setInt8;
-        }
-        break;
-        
-        case'u8':
-        {
-            tl=1*l;
-            b=bin?bin:new ArrayBuffer(tl);
-            dv=new DataView(b,0);
-            rd=dv.getUint8;
-            wt=dv.setUint8;
-        }
-        break;
-        
-        case's16':
-        {
-            tl=2*l;
-            b=bin?bin:new ArrayBuffer(tl);
-            dv=new DataView(b,0);
-            rd=dv.getInt16;
-            wt=dv.setInt16;
-        }
-        break;
-        
-        case'u16':
-        {
-            tl=2*l;
-            b=bin?bin:new ArrayBuffer(tl);
-            dv=new DataView(b,0);
-            rd=dv.getUint16;
-            wt=dv.setUint16;
-        }
-        break;
-        
-        case's32':
-        {
-            tl=4*l;
-            b=bin?bin:new ArrayBuffer(tl);
-            dv=new DataView(b,0);
-            rd=dv.getInt32;
-            wt=dv.setInt32;
-        }
-        break;
-        
-        case'u32':
-        {
-            tl=4*l;
-            b=bin?bin:new ArrayBuffer(tl);
-            //log("8888:"+b+" :9999");
-            dv=new DataView(b,0);
-            rd=dv.getUint32;
-            wt=dv.setUint32;
-        }
-        break;
-        
-        case's64':
-        {
-            tl=8*l;
-            b=bin?bin:new ArrayBuffer(tl);
-            dv=new DataView(b,0);
-            rd=dv.getBigInt64;
-            wt=dv.getBigInt64;
-        }
-        break;
-        
-        case'u64':
-        {
-            tl=8*l;
-            b=bin?bin:new ArrayBuffer(tl);
-            dv=new DataView(b,0);
-            rd=dv.getBigUint64;
-            wt=dv.setBigUint64;
-        }
-        break;
-        
-        case'f32':
-        {
-            tl=4*l;
-            b=bin?bin:new ArrayBuffer(tl);
-            dv=new DataView(b,0);
-            rd=dv.getFloat32;
-            wt=dv.setFloat32;
-        }
-        break;
-        
-        case'f64':
-        {
-            tl=8*l;
-            b=bin?bin:new ArrayBuffer(tl);
-            dv=new DataView(b,0);
-            rd=dv.getFloat64;
-            wt=dv.setFloat64;
-        }
-        break;
-
-        default:
-        return null;
-    }
+    f.t=s[0];
+    f.n=n;
     
-    fx.b=b;
-    fx.tl=tl;
-    fx.dv=dv;
-    fx.rd=rd;
-    fx.wt=wt;
-    
-    return fx;
+    return f;
 }
 
 
@@ -330,24 +198,33 @@ function get_tlen(obj)
         else if(isObject(p)) {
             len+=get_tlen(p);
         }
-        
     }
     
     return len;
 }
 
-function to_bin(prop,js)
+function _j2b(prop,js)
 {
-    var fx=get_fx(prop);
-    fx.wt.bind(fx.dv)(0,js,true);
+    var fn;
+    var inf=info(prop);
+    eval('var b=new '+FUNS[inf.t].tp+'(inf.n)');
+    for(var i=0;i<bin.length;i++) {
+        b[i]=js[i];
+    }
     
-    return fx.b;
+    return b;
 }
 
-function to_js(prop,bin)
+function _b2j(prop,bin)
 {
-    var fx=get_fx(prop,bin);
-    return fx.rd.bind(fx.dv)(0,true);
+    var js=[];
+    var inf=info(prop);
+    var t=eval('var b=new '+FUNS[inf.t].tp+'(bin)');
+    for(var i=0;i<b.length;i++) {
+        js[i]=(b[i]);
+    }
+    
+    return (b.length>1)?js:js[0];
 }
 
 function bin_concat(bs,l)
@@ -415,85 +292,23 @@ function mk_paras(bin)
 
 function mk_conv(cov,obj)
 {
-    var i,j,p,tp=obj.tp;
+    var i,j,p,tp=obj._tp_;
+    
+    if(!cov[tp]) {
+        cov[tp]={};
+        cov[tp].desc=obj;
+        cov[tp].tlen=0;
+        cov[tp].tp=tp;
+    }
+    
     for(i in obj) {
         p=obj[i];
+        
+        
+        
         if(isString(p)) {
-            if(!cov[tp]) {
-                cov[tp]={};
-                cov[tp].desc=p;
-                cov[tp].tlen=0;
-                cov[tp].tp=tp;
-            }
-                 
+            //log(i+":"+p); 
             cov[tp].tlen+=get_plen(p); 
-              
-            //bin to js
-            cov[tp].b2j=function(bin,type) {
-                var b=bin;
-                var offset=0,l;
-                var js={},len=0;
-                var desc=CONVS[type].desc,ds;
-                
-                //log(st);
-                //log(b);
-                
-                js.tp=type;
-                for(var i in desc) {
-                    p=desc[i];
-                    if(isString(p)) {
-                        l=get_plen(p);
-                        b=b.slice(b,offset,l);
-                        js[p]=to_js(p,b);
-                        offset+=l;
-                        log(b);
-                    }
-                    else if(isArray(p)) {
-                        for(var j=0;j<p.length;j++) {
-                            //
-                        }
-                    }
-                    else if(isObject(p)) {
-                        js[p]=CONVS[p.tp].b2j(b,p.tp);
-                        ds=CONVS[p.tp].desc;
-                        l=CONVS[p.tp].tlen;
-                        offset+=l;
-                        b=b.slice(b,offset,l);
-                    }
-                }
-                
-                return js;
-            };
-            
-            //js to bin
-            cov[tp].j2b=function(js) {
-                
-                var bin=[];
-                var desc=CONVS[js.tp].desc;
-                var tl=CONVS[js.tp].tlen;
-                
-                for(var i in desc) {
-                    var p=js[i];
-                    if(isNumber(p)) {
-                        var b=to_bin(p,js[p]);
-                        bin.push(b);
-                    }
-                    else if(isString(p)) {
-                        //??
-                    }
-                    else if(isArray(p)) {
-                        for(var j=0;j<p.length;j++) {
-                            //
-                        }
-                    }
-                    else if(isObject(p)) {
-                        var b=cov[p.tp].j2b(js[p]);
-                        bin.push(b);
-                    } 
-                }
-                
-                return bin_concat(bin);
-            };
         }
         else if(isArray(p)) {
             for(var j=0;j<p.length;j++) {
@@ -505,16 +320,83 @@ function mk_conv(cov,obj)
         }
     }
     
+    //log("tp:"+tp);
+    //bin to js
+    cov[tp].b2j=function(bin,type) {
+        var b;
+        var offset=0,l;
+        var js={},len=0;
+        var desc=CONVS[type].desc,ds;
+        
+        //log(st);
+        //log(b);
+        
+        js.tp=type;
+        for(var i in desc) {
+            p=desc[i];
+            if(isString(p)) {
+                l=get_plen(p);
+                b=bin.slice(offset,offset+l);
+                js[i]=_b2j(p,b);
+                offset+=l;
+            }
+            else if(isArray(p)) {
+                for(var j=0;j<p.length;j++) {
+                    //
+                }
+            }
+            else if(isObject(p)) {
+                var tp=p._tp_;
+                b=bin.slice(offset,offset+l);
+                js[i]=CONVS[tp].b2j(b,tp);
+                l=CONVS[tp].tlen;
+                offset+=l; 
+            }
+        }
+        
+        return js;
+    };
+    
+    //js to bin
+    cov[tp].j2b=function(js) {
+        
+        var bin=[];
+        var desc=CONVS[js.tp].desc;
+        var tl=CONVS[js.tp].tlen;
+        
+        for(var i in desc) {
+            var p=js[i];
+            if(isNumber(p)) {
+                var b=_j2b(p,js[p]);
+                bin.push(b);
+            }
+            else if(isString(p)) {
+                //??
+            }
+            else if(isArray(p)) {
+                for(var j=0;j<p.length;j++) {
+                    //
+                }
+            }
+            else if(isObject(p)) {
+                var b=cov[p.tp].j2b(js[p]);
+                bin.push(b);
+            } 
+        }
+        
+        return bin_concat(bin);
+    };
+    
     return cov;
 }
 var CONVS=(function() {
     var cv=[];
     
     mk_conv(cv,hdr_t);
-    mk_conv(cv,gain_t);
-    mk_conv(cv,eq_t);
-    mk_conv(cv,setup_t);
-    mk_conv(cv,paras_t);
+    //mk_conv(cv,gain_t);
+    //mk_conv(cv,eq_t);
+    //mk_conv(cv,setup_t);
+    //mk_conv(cv,paras_t);
     
     //print_obj(cv);
     //log(cv);
@@ -589,8 +471,11 @@ var DATA=(function() {
             break;
             
             case TYPE.PARAS:
-            DATA.paras=o.data;
-            //ui refresh ?
+            {
+                //DATA.paras=o.data;
+                //ui refresh ?
+                log("TYPE.PARAS");
+            }
             break;  
         }
     }
