@@ -35,68 +35,39 @@ TYPE.PARAS=tmp++;
 /******数据类型定义 start******/
 //hdr:header
 var hdr_t={//第1层
-    tp:TYPE.HDR,
-    st:{
-        magic:'u32.1.number',   //魔术字
-        pack: 'u32.1.number',    //封包方式(1字节1类型)
-        itype:'u32.1.number',   //io类型
-        dtype:'u32.1.number',   //data类型
-        dlen: 'u32.1.number',
-    },
-    data:null,
+    _tp_:TYPE.HDR,
+    magic:'u32.1.number',   //魔术字
+    pack: 'u32.1.number',    //封包方式(1字节1类型)
+    itype:'u32.1.number',   //io类型
+    dtype:'u32.1.number',   //data类型
+    dlen: 'u32.1.number',
 };
 
 var gain_t={
-    tp:TYPE.GAIN,
-    st:{
-        value:   's16.1.num',
-    },
-    data:null,
+    _tp_:TYPE.GAIN,
+    value:'s16.1.num',
 };
 
 var eq_t={
-    tp:TYPE.EQ,
-    st:{
-        aa: 'u8.1.number',
-        bb: 'u8.1.number',
-    },
-    data:[
-        gain_t,
-    ],
+    _tp_:TYPE.EQ,
+    aa:'u8.1.number',
+    bb:'u8.1.number',
+    g:gain_t,
 };
 
 var setup_t={
-    tp:TYPE.SETUP,
-    st:{
-        lang:'u8.1.num',
-        cnt:'u16.1.num',
-    },
-    data:null
+    _tp_:TYPE.SETUP,
+    lang:'u8.1.num',
+    cnt:'u16.1.num',
 };
 
 var paras_t={
-    tp:TYPE.PARAS,
-    st:{
-        ver:'u8.1.num',    //port:'u8.1.str'
-        data:[
-            eq_t,
-            setup_t,
-            //...
-        ],
-    },
+    _tp_:TYPE.PARAS,
+    ver:'u8.1.num',    //port:'u8.1.str'
+    eq:eq_t,
+    setup:setup_t,
 };
 /******数据类型定义 end******/
-
-/******数据包格式定义 start******/
-var PACKET={
-    hdr:hdr_t,
-    data:[
-        eq_t,
-        setup_t,
-        paras_t,
-    ],
-};
-/******数据包格式定义 end******/
 
 function log(s)
 {
@@ -177,19 +148,19 @@ function get_cnt(obj){
 function get_tlen(tp)
 {
     switch(tp) {
-          case's8': return 1;
-          case'u8': return 1;
-          case's16':return 2;
-          case'u16':return 2;
-          case's32':return 4;
-          case'u32':return 4;
-          case's64':return 8;
-          case'u64':return 8;
-          case'f32':return 4;
-          case'f64':return 8;
-          
-          default:
-          return -1;
+      case's8': return 1;
+      case'u8': return 1;
+      case's16':return 2;
+      case'u16':return 2;
+      case's32':return 4;
+      case'u32':return 4;
+      case's64':return 8;
+      case'u64':return 8;
+      case'f32':return 4;
+      case'f64':return 8;
+      
+      default:
+      return -1;
     }
 }
 
@@ -199,22 +170,22 @@ function get_plen(prop)
     var s=prop.split('.');
     var l=parseInt(s[1]);
     switch(s[0]) {
-          case's8':
-          case'u8': return 1*l;
-          
-          case's16':
-          case'u16':return 2*l;
-          
-          case's32':
-          case'u32':
-          case'f32':return 4*l;
-          
-          case's64':
-          case'u64':
-          case'f64':return 8*l;
-          
-          default:
-          return 0;
+      case's8':
+      case'u8': return 1*l;
+      
+      case's16':
+      case'u16':return 2*l;
+      
+      case's32':
+      case'u32':
+      case'f32':return 4*l;
+      
+      case's64':
+      case'u64':
+      case'f64':return 8*l;
+      
+      default:
+      return 0;
     }
 }
 
@@ -222,7 +193,7 @@ function get_plen(prop)
 //暂未实现字符串,已预留作后续处理
 function get_fx(pp,bin)
 {
-    var fx={},set,get,tl,dv;
+    var fx={},rd,wt,tl,dv;
     var s=pp.split('.');
     var l=parseInt(s[1]);
     
@@ -232,8 +203,8 @@ function get_fx(pp,bin)
             tl=1*l;
             b=bin?bin:new ArrayBuffer(tl);
             dv=new DataView(b,0);
-            get=dv.getInt8;
-            set=dv.setInt8;
+            rd=dv.getInt8;
+            wt=dv.setInt8;
         }
         break;
         
@@ -242,8 +213,8 @@ function get_fx(pp,bin)
             tl=1*l;
             b=bin?bin:new ArrayBuffer(tl);
             dv=new DataView(b,0);
-            get=dv.getUint8;
-            set=dv.setUint8;
+            rd=dv.getUint8;
+            wt=dv.setUint8;
         }
         break;
         
@@ -252,8 +223,8 @@ function get_fx(pp,bin)
             tl=2*l;
             b=bin?bin:new ArrayBuffer(tl);
             dv=new DataView(b,0);
-            get=dv.getInt16;
-            set=dv.setInt16;
+            rd=dv.getInt16;
+            wt=dv.setInt16;
         }
         break;
         
@@ -262,8 +233,8 @@ function get_fx(pp,bin)
             tl=2*l;
             b=bin?bin:new ArrayBuffer(tl);
             dv=new DataView(b,0);
-            get=dv.getUint16;
-            set=dv.setUint16;
+            rd=dv.getUint16;
+            wt=dv.setUint16;
         }
         break;
         
@@ -272,8 +243,8 @@ function get_fx(pp,bin)
             tl=4*l;
             b=bin?bin:new ArrayBuffer(tl);
             dv=new DataView(b,0);
-            get=dv.getInt32;
-            set=dv.setInt32;
+            rd=dv.getInt32;
+            wt=dv.setInt32;
         }
         break;
         
@@ -281,9 +252,10 @@ function get_fx(pp,bin)
         {
             tl=4*l;
             b=bin?bin:new ArrayBuffer(tl);
+            //log("8888:"+b+" :9999");
             dv=new DataView(b,0);
-            get=dv.getUint32;
-            set=dv.setUint32;
+            rd=dv.getUint32;
+            wt=dv.setUint32;
         }
         break;
         
@@ -292,8 +264,8 @@ function get_fx(pp,bin)
             tl=8*l;
             b=bin?bin:new ArrayBuffer(tl);
             dv=new DataView(b,0);
-            get=dv.getInt64;
-            set=dv.getInt64;
+            rd=dv.getBigInt64;
+            wt=dv.getBigInt64;
         }
         break;
         
@@ -302,8 +274,8 @@ function get_fx(pp,bin)
             tl=8*l;
             b=bin?bin:new ArrayBuffer(tl);
             dv=new DataView(b,0);
-            get=dv.getUint64;
-            set=dv.setUint64;
+            rd=dv.getBigUint64;
+            wt=dv.setBigUint64;
         }
         break;
         
@@ -312,8 +284,8 @@ function get_fx(pp,bin)
             tl=4*l;
             b=bin?bin:new ArrayBuffer(tl);
             dv=new DataView(b,0);
-            get=dv.getFloat32;
-            set=dv.setFloat32;
+            rd=dv.getFloat32;
+            wt=dv.setFloat32;
         }
         break;
         
@@ -322,8 +294,8 @@ function get_fx(pp,bin)
             tl=8*l;
             b=bin?bin:new ArrayBuffer(tl);
             dv=new DataView(b,0);
-            get=dv.getFloat64;
-            set=dv.setFloat64;
+            rd=dv.getFloat64;
+            wt=dv.setFloat64;
         }
         break;
 
@@ -334,34 +306,29 @@ function get_fx(pp,bin)
     fx.b=b;
     fx.tl=tl;
     fx.dv=dv;
-    fx.get=get;
-    fx.set=set;
+    fx.rd=rd;
+    fx.wt=wt;
     
     return fx;
 }
 
 
-function get_slen(st)
+function get_tlen(obj)
 {
     var len=0;
     
-    if(!st) {
-        log("st not initialized");
+    if(!obj) {
+        log("obj is null!");
         return 0;
     }
     
-    for(var i in st) {
-        var p=st[i];
+    for(var i in obj) {
+        var p=obj[i];
         if(isString(p)) {
             len+=get_plen(p);
         }
-        else if(isArray(p)) {
-            for(var j=0;j<p.length;j++) {
-                len+=get_slen(p[j].st);
-            }
-        }
         else if(isObject(p)) {
-            len+=get_slen(p.st);
+            len+=get_tlen(p);
         }
         
     }
@@ -372,17 +339,15 @@ function get_slen(st)
 function to_bin(prop,js)
 {
     var fx=get_fx(prop);
-    fx.set(0,js,true);
+    fx.wt.bind(fx.dv)(0,js,true);
     
     return fx.b;
 }
 
 function to_js(prop,bin)
 {
-    var js={};
     var fx=get_fx(prop,bin);
-    
-    return fx.get(0,true);
+    return fx.rd.bind(fx.dv)(0,true);
 }
 
 function bin_concat(bs,l)
@@ -448,51 +413,53 @@ function mk_paras(bin)
 }
 
 
-function mk_conv(cov,obj,type)
+function mk_conv(cov,obj)
 {
-    var i,j,p,tp=null;
-    
+    var i,j,p,tp=obj.tp;
     for(i in obj) {
         p=obj[i];
-        if(i === 'tp') {
-            tp=p;
-        }
-        else if(i === 'st') {
+        if(isString(p)) {
             if(!cov[tp]) {
                 cov[tp]={};
-                cov[tp].st=p;
-                cov[tp].sl=get_slen(p);
+                cov[tp].desc=p;
+                cov[tp].tlen=0;
                 cov[tp].tp=tp;
             }
-                    
+                 
+            cov[tp].tlen+=get_plen(p); 
+              
             //bin to js
             cov[tp].b2j=function(bin,type) {
                 var b=bin;
+                var offset=0,l;
                 var js={},len=0;
-                var st=CONVS[type].st;
+                var desc=CONVS[type].desc,ds;
+                
+                //log(st);
+                //log(b);
                 
                 js.tp=type;
-                for(var p in st) {
-                    if(isNumber(p)) {
-                        js[p]=to_js(st[p],b);
-                        b+=get_plen(st[p]);
-                    }
-                    else if(isString(p)) {
-                        //
+                for(var i in desc) {
+                    p=desc[i];
+                    if(isString(p)) {
+                        l=get_plen(p);
+                        b=b.slice(b,offset,l);
+                        js[p]=to_js(p,b);
+                        offset+=l;
+                        log(b);
                     }
                     else if(isArray(p)) {
-                        for(i=0;i<p.length;i++) {
-                            js[p]=CONVS[p.tp].b2j(b,p.tp);
-                            var st2=CONVS[p.tp].st;
-                            b+=get_slen(st2[p.tp]);
+                        for(var j=0;j<p.length;j++) {
+                            //
                         }
                     }
                     else if(isObject(p)) {
                         js[p]=CONVS[p.tp].b2j(b,p.tp);
-                        var st2=CONVS[p.tp].st;
-                        b+=get_slen(st2[p.tp]);
+                        ds=CONVS[p.tp].desc;
+                        l=CONVS[p.tp].tlen;
+                        offset+=l;
+                        b=b.slice(b,offset,l);
                     }
-
                 }
                 
                 return js;
@@ -502,24 +469,21 @@ function mk_conv(cov,obj,type)
             cov[tp].j2b=function(js) {
                 
                 var bin=[];
-                var st=CONVS[js.tp].st;
-                var sl=CONVS[js.tp].sl;
+                var desc=CONVS[js.tp].desc;
+                var tl=CONVS[js.tp].tlen;
                 
-                for(var i in js) {
+                for(var i in desc) {
                     var p=js[i];
                     if(isNumber(p)) {
-                        var b=to_bin(st[p],js[p]);
+                        var b=to_bin(p,js[p]);
                         bin.push(b);
                     }
                     else if(isString(p)) {
-                        
+                        //??
                     }
                     else if(isArray(p)) {
                         for(var j=0;j<p.length;j++) {
-                            if(isObject(p[j])) {
-                                var b=cov[p[j].tp].j2b(p[j]);
-                                bin.push(b);
-                            }
+                            //
                         }
                     }
                     else if(isObject(p)) {
@@ -531,15 +495,13 @@ function mk_conv(cov,obj,type)
                 return bin_concat(bin);
             };
         }
-        else if(i === 'data') {
-            if(isArray(p)) {
-                for(var j=0;j<p.length;j++) {
-                    mk_conv(cov,p[j],tp);
-                }
+        else if(isArray(p)) {
+            for(var j=0;j<p.length;j++) {
+                mk_conv(cov,p[j]);
             }
-            else if(isObject(p)) {
-                mk_conv(cov,p,tp);
-            }
+        }
+        else if(isObject(p)) {
+            mk_conv(cov,p);
         }
     }
     
@@ -572,27 +534,27 @@ function mk_bin(p)
 }
 
 var DATA=(function() {
-    var d={};
-    d.paras=null;
+    var dt={};
+    dt.paras=null;
     /////////////////////
     
-    d.fn=[];
-    d.open=_open;
+    dt.fn=[];
+    dt.open=_open;
     
     function _onevt(e,fn) {
-        d.fn[e]=fn;
+        dt.fn[e]=fn;
     }
     
     function _open(url) {
-        d._ws=new WebSocket(url);
-        if(d._ws) {
+        dt._ws=new WebSocket(url);
+        if(dt._ws) {
+            dt.send=_send;
+            dt.bind=_bind;
+            dt.onevt=_onevt;
+            dt.close=_close;
             
-            d.send=_send;
-            d.bind=_bind;
-            d.onevt=_onevt;
-            d.close=_close;
-            
-            d._ws.onmessage=_onmsg;
+            dt._ws.onmessage=_onmsg;
+            dt._ws.binaryType="arraybuffer";
         }
     }
     
@@ -612,6 +574,7 @@ var DATA=(function() {
     function _onmsg(e) {
         
         var hdr=_unpack(e.data);
+        log(hdr);
         log("dtype:"+hdr.dtype);
         switch(hdr.dtype) {
             case TYPE.GAIN:
@@ -639,11 +602,11 @@ var DATA=(function() {
     }
     function _send(js) {
         var bin=_pack(js);
-        this._ws.send(bin);
+        dt._ws.send(bin);
     }
     
     function _close() {
-        this._ws.close();
+        dt._ws.close();
     }
     
     /*
@@ -658,7 +621,7 @@ var DATA=(function() {
         js.update_fn=update_fn;
     }
     
-    return d;
+    return dt;
 }());
 
 

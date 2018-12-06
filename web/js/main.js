@@ -223,7 +223,7 @@ function myAll()
     
     var st=Laya.stage;
     //var url="ws://192.168.4.1:8191"
-    var url="ws://192.168.2.106:8191"
+    var url="ws://192.168.2.108:8191"
     
     loadRes();
     log(DATA);
