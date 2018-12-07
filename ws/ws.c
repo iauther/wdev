@@ -175,9 +175,9 @@ static int do_pack(int type, void *data, int len)
     }
     
     pk->magic = MAGIC;
-    pk->pack[0] = TYPE_PACK;
-    pk->pack[1] = TYPE_HDR;
-    pk->pack[2] = type;
+    pk->pack[0] = TYPE_HDR;
+    pk->pack[1] = type;
+    pk->pack[2] = -1;
     pk->pack[3] = -1;
     hdr->itype = IO_WIFI;
     hdr->dtype = type;

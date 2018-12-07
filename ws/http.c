@@ -36,7 +36,7 @@ int http_init()
     mg_bindopt_t opt={0};
     mg_conn_t *conn;
     
-    mopt.document_root = "./web";  // server root directory
+    mopt.document_root = "../web";  // server root directory
     mopt.enable_directory_listing = "no";
     
     mg_mgr_init(&mgr1, NULL);
