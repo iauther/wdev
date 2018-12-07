@@ -44,7 +44,7 @@ TYPE.UPG=tmp++;
 TYPE.SETUP=tmp++;
 TYPE.PARAS=tmp++;
 //...
-TYPE.MAX=tmp
+TYPE.MAX=tmp;
 
 var pack_t={
     _tp_:TYPE.PACK,
@@ -194,14 +194,15 @@ function _j2b(prop,js)
     var bin=new ArrayBuffer(js.tlen);
     var dv=new DataView(bin);
     var id=FUNS[inf.t].set;
+    var sz=FUNS[inf.t].sz;
     
     if(isArray(js)) {
         for(var i=0;i<js.length;i++) {
-            dv[id](i,js[i]);
+            dv[id](i*sz,js[i],true);
         }
     }
     else {
-        dv[id](0,js);
+        dv[id](0,js,true);
     }
     
     return bin;
@@ -211,17 +212,18 @@ function _b2j(prop,bin)
 {
     var js;
     var inf=info(prop);
-    var dv=new DataView(bin);
+    var dv=new DataView(bin,bin.offset);
     var id=FUNS[inf.t].get;
+    var sz=FUNS[inf.t].sz;
+    
     if(inf.n>1) {
-        js=[];        
+        js=[];
         for(var i=0;i<inf.n;i++) {
-            js[i]=dv[id](i); //big endian
-            //log("___js["+i+"]"+js[i]);
+            js[i]=dv[id](i*sz,true); //little endian
         }
     }
     else {
-        js=dv[id](0);   //big endian
+        js=dv[id](0,true);   //little endian
         //log("___js:"+js);
     }   
     
@@ -290,7 +292,6 @@ function mk_paras(bin)
     
 }
 
-
 function mk_conv(cov,obj)
 {
     var i,j,p,tp=obj._tp_;
@@ -305,7 +306,6 @@ function mk_conv(cov,obj)
     for(i in obj) {
         p=obj[i];
         if(isString(p)) {
-            //log(i+":"+p); 
             cov[tp].tlen+=get_plen(p); 
         }
         else if(isArray(p)) {
@@ -318,27 +318,20 @@ function mk_conv(cov,obj)
         }
     }
     
-    //log("tp:"+tp);
     //bin to js
-    cov[tp].b2j=function(bin,type) {
-        var b;
-        var offset=0,l;
+    cov[tp].b2j=function(type,bin) {
+        var l;
         var js={};
-        var desc=CONVS[type].desc,ds;
+        var desc=CONVS[type].desc;
         
-        //log("tp:"+type);
         js.tp=type;
         js.tlen=CONVS[type].tlen;
         for(var i in desc) {
-            //log("tp:"+type+"-"+i);
-            
             p=desc[i];
-            //log("tp:"+type+"  i:"+i+"  p:"+p+"  isobject:"+isObject(p));
             if(isString(p)) {
                 l=get_plen(p);
-                b=bin.slice(offset,offset+l);
-                js[i]=_b2j(p,b);
-                offset+=l;
+                js[i]=_b2j(p,bin);
+                bin.offset+=l;
             }
             else if(isArray(p)) {
                 for(var j=0;k<j.length;j++) {
@@ -347,26 +340,7 @@ function mk_conv(cov,obj)
             }
             else if(isObject(p)) {
                 var tp=p._tp_;
-                l=CONVS[tp].tlen;
-                b=bin.slice(offset,offset+l);
-
-                js[i]=CONVS[tp].b2j(b,tp);
-                offset+=l; 
-            }
-        }
-        
-        var js2;
-        if(type==TYPE.PACK) {
-            for(var i=1;i<js.pack.length;i++) {
-                var tp=js.pack[i];
-                log("**** tp["+i+"]:"+tp+"  offset:"+offset);
-                if(tp>=0 && tp<TYPE.MAX) {
-                    var l=CONVS[tp].tlen;
-                    b=bin.slice(offset,offset+l);
-                    js[i]=CONVS[tp].b2j(b,tp);
-                    offset+=CONVS[tp].tlen;
-                }
-                
+                js[i]=CONVS[tp].b2j(tp,bin);
             }
         }
         
@@ -463,16 +437,33 @@ var DATA=(function() {
     }
     function _unpack(bin)
     {
-        return CONVS[TYPE.PACK].b2j(bin,TYPE.PACK);
+        var a,b;
+        bin.offset=0;
+        var p=CONVS[TYPE.PACK].b2j(TYPE.PACK,bin);
+        for(var i=0;i<p.pack.length;i++) {
+            var tp=p.pack[i];
+            if(tp>=0 && tp<TYPE.MAX) {
+                if(tp==TYPE.HDR) {
+                    a=CONVS[tp].b2j(tp,bin);
+                }
+                else {
+                    b=CONVS[tp].b2j(tp,bin);
+                }
+            }
+        }
+        
+        bin.offset=null;
+        
+        return {hdr:a,dat:b};
+        
     }
     function _onmsg(e) {
-        log(e.data);
-        var hdr=_unpack(e.data);
-        //log(hdr);
-        //log("dtype:"+hdr.dtype);
-        switch(hdr.dtype) {
+        //log(e.data);
+        
+        var r=_unpack(e.data);
+        switch(r.hdr.dtype) {
             case TYPE.GAIN:
-            var g=hdr.data;
+            var g=r.dat.eq.gain;
             log("____gain:"+g.value);
             break;
             
@@ -484,9 +475,7 @@ var DATA=(function() {
             
             case TYPE.PARAS:
             {
-                //DATA.paras=o.data;
-                //ui refresh ?
-                //log("TYPE.PARAS");
+                DATA.paras=r.dat;
             }
             break;  
         }

@@ -83,7 +83,7 @@ function myFader(parent,area,txt,data)
     function onChange(v) {
         //log("clip value:"+v);
         data.value=v;
-        DATA.send(js);
+        //DATA.send(js);
     }
     
     return sp;
@@ -223,16 +223,17 @@ function myAll()
     
     var st=Laya.stage;
     //var url="ws://192.168.4.1:8191"
-    var url="ws://192.168.2.103:8191"
+    var url="ws://192.168.1.9:8191"
     
     loadRes();
     //log(DATA);
     DATA.open(url);
     
-    Laya.timer.loop(5000, this, paras_chk);
+    Laya.timer.loop(2000, this, paras_chk);
     function paras_chk()
     {
-        //log(DATA.paras);
+        log(DATA.paras);
+        log("aaaaaaaaaaaaaaa");
         if(DATA.paras) {
             Laya.timer.clear(this, paras_chk);
             myInit();
@@ -245,7 +246,7 @@ function myAll()
         //this.et = new myEdit(st,    Area(0,0,0,0), data);
         //this.ug = new myUpgrade(st, Area(0,0,0,0), data);
         
-        var fd = new myFader(st,new Area(200,200,600,400),"fader", DATA.paras.eq.g);
+        var fd = new myFader(st,new Area(200,200,600,400),"fader", DATA.paras.eq.gain);
         log("myInit");
     }
     
