@@ -1,4 +1,5 @@
 #include <string.h>
+#include <endian.h>
 #include "inc.h"
 #include "data.h"
 #include "mg.h"
@@ -9,7 +10,7 @@ static paras_t mparas={
     .eq={
         .aa=8,
         .bb=9,
-        .g={
+        .gain={
             .value=25,
         },
     },
@@ -49,7 +50,7 @@ static void ws_proc(mg_conn_t *nc, void *data, int len)
                 return;
             }
             
-            gain_t *g=hdr->data;
+            gain_t *g=(gain_t*)hdr->data;
             LOG("_____gain.value: %d\n", g->value);
         }
         break;
@@ -81,6 +82,7 @@ static void ev_handler(mg_conn_t *nc, int ev, void *p)
     switch (ev) {
         case MG_EV_WEBSOCKET_HANDSHAKE_DONE:
         {
+            LOG("___ send paras\n");
             ws_send_paras(nc);
         }
         break;
@@ -156,24 +158,50 @@ int  ws_free()
 
 
 static char tmpbuf[500];
+static void fill()
+{
+    
+}
 static int do_pack(int type, void *data, int len)
 {
     int l;
-    hdr_t *hdr=(hdr_t*)tmpbuf;
+    pack_t *pk=(pack_t*)tmpbuf;
+    hdr_t *hdr=(hdr_t*)pk->data;
     
-    l = len+sizeof(hdr_t);
+    l = len+sizeof(pack_t)+sizeof(hdr_t);
     if(l>sizeof(tmpbuf)) {
-        LOG("pack len overflow!");
+        LOG("packet buf overflow!");
         return -1;
     }
     
-    hdr->magic = MAGIC;
-    //hdr->pack[0] = 0;
+    pk->magic = MAGIC;
+    pk->pack[0] = TYPE_PACK;
+    pk->pack[1] = TYPE_HDR;
+    pk->pack[2] = type;
+    pk->pack[3] = -1;
     hdr->itype = IO_WIFI;
     hdr->dtype = type;
     hdr->dlen = len;
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    LOG("___little endian\n");
+#elif __BYTE_ORDER == __BIG_ENDIAN
+    LOG("___big endian\n");
+#endif
     
     memcpy((void*)hdr->data, data, len);
+    
+    LOG("___magic:  %ld\n", pk->magic);
+    LOG("___pack[0]: %d\n", pk->pack[0]);
+    LOG("___pack[1]: %d\n", pk->pack[1]);
+    LOG("___pack[2]: %d\n", pk->pack[2]);
+    LOG("___pack[3]: %d\n", pk->pack[3]);
+    LOG("___itype:   %d\n", hdr->itype);
+    LOG("___dtype:   %d\n", hdr->dtype);
+    LOG("___dlen:    %d\n", hdr->dlen);
+    
+    
+    
     return l;
 }
 int ws_send(mg_conn_t *nc, int type, void *data, int len)
@@ -181,6 +209,7 @@ int ws_send(mg_conn_t *nc, int type, void *data, int len)
     int l;
     
     l = do_pack(type, data, len);
+    LOG("ws send l: %d\n", l);
     ws_write(nc, tmpbuf, l);
     
     return 0;

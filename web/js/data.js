@@ -21,20 +21,21 @@ IO.WIFI=1<<tmp++;
 
 /////////////////////////////////////
 var FUNS=[];
-FUNS['s8' ]={nm:'s8', tp:'Int8Array',   sz:1,get:'getInt8',   set:'setInt8'   };
-FUNS['u8' ]={nm:'u8', tp:'Uint8Array',  sz:1,get:'getUint8',  set:'setUint8'  };
-FUNS['s16']={nm:'s16',tp:'Int16Array',  sz:2,get:'getInt16',  set:'setInt16'  };
-FUNS['u16']={nm:'u16',tp:'Uint16Array', sz:2,get:'getUint16', set:'setUint16' };
-FUNS['s32']={nm:'s32',tp:'Int32Array',  sz:4,get:'getInt32',  set:'setInt32'  };
-FUNS['u32']={nm:'u32',tp:'Uint32Array', sz:4,get:'getUint32', set:'setUint32' };
-FUNS['f32']={nm:'f32',tp:'Float32Array',sz:4,get:'getFloat32',set:'setFloat32'};
-FUNS['f64']={nm:'f64',tp:'Float64Array',sz:8,get:'getFloat64',set:'setFloat64'};
+FUNS['s8' ]={nm:'s8', tp:Int8Array,   sz:1,get:'getInt8',   set:'setInt8'   };
+FUNS['u8' ]={nm:'u8', tp:Uint8Array,  sz:1,get:'getUint8',  set:'setUint8'  };
+FUNS['s16']={nm:'s16',tp:Int16Array,  sz:2,get:'getInt16',  set:'setInt16'  };
+FUNS['u16']={nm:'u16',tp:Uint16Array, sz:2,get:'getUint16', set:'setUint16' };
+FUNS['s32']={nm:'s32',tp:Int32Array,  sz:4,get:'getInt32',  set:'setInt32'  };
+FUNS['u32']={nm:'u32',tp:Uint32Array, sz:4,get:'getUint32', set:'setUint32' };
+FUNS['f32']={nm:'f32',tp:Float32Array,sz:4,get:'getFloat32',set:'setFloat32'};
+FUNS['f64']={nm:'f64',tp:Float64Array,sz:8,get:'getFloat64',set:'setFloat64'};
 
 
 /////////////////////////////////////
 tmp=0;
 var TYPE=[];
 ///////////////
+TYPE.PACK=tmp++;
 TYPE.HDR=tmp++;
 TYPE.GAIN=tmp++;
 TYPE.EQ=tmp++;
@@ -43,39 +44,45 @@ TYPE.UPG=tmp++;
 TYPE.SETUP=tmp++;
 TYPE.PARAS=tmp++;
 //...
+TYPE.MAX=tmp
+
+var pack_t={
+    _tp_:TYPE.PACK,
+    magic:'u32.1',    //魔术字
+    pack: 's16.4',     //封包方式(1字节1类型)
+};
+
 
 /******数据类型定义 start******/
 //hdr:header
 var hdr_t={//第1层
     _tp_:TYPE.HDR,
-    magic:'u32.1.number',   //魔术字
-    pack: 'u32.1.number',    //封包方式(1字节1类型)
-    itype:'u32.1.number',   //io类型
-    dtype:'u32.1.number',   //data类型
-    dlen: 'u32.1.number',
+    itype:'u32.1',   //io类型
+    dtype:'u32.1',   //data类型
+    dlen: 'u32.1',
 };
 
 var gain_t={
     _tp_:TYPE.GAIN,
-    value:'s16.1.num',
+    value:'s16.1',
 };
 
 var eq_t={
     _tp_:TYPE.EQ,
-    aa:'u8.1.number',
-    bb:'u8.1.number',
-    g:gain_t,
+    aa:'u8.1',
+    bb:'u8.1',
+    gain:gain_t,
 };
 
 var setup_t={
     _tp_:TYPE.SETUP,
-    lang:'u8.1.num',
-    cnt:'u16.1.num',
+    lang:'u8.1',
+    cnt:'u16.1',
 };
 
 var paras_t={
     _tp_:TYPE.PARAS,
-    ver:'u8.1.num',    //port:'u8.1.str'
+    ver:'u8.1',    //port:'u8.1.str'
     eq:eq_t,
     setup:setup_t,
 };
@@ -103,7 +110,7 @@ function isArray(o)
 
 function isObject(o)
 {
-    return (!o && (typeof o)==='object');
+    return (o && (typeof o === 'object'));
 }
 
 
@@ -183,26 +190,42 @@ function get_tlen(obj)
 
 function _j2b(prop,js)
 {
-    var fn;
     var inf=info(prop);
-    eval('var b=new '+FUNS[inf.t].tp+'(inf.n)');
-    for(var i=0;i<bin.length;i++) {
-        b[i]=js[i];
+    var bin=new ArrayBuffer(js.tlen);
+    var dv=new DataView(bin);
+    var id=FUNS[inf.t].set;
+    
+    if(isArray(js)) {
+        for(var i=0;i<js.length;i++) {
+            dv[id](i,js[i]);
+        }
+    }
+    else {
+        dv[id](0,js);
     }
     
-    return b;
+    return bin;
 }
 
 function _b2j(prop,bin)
 {
-    var js=[];
+    var js;
     var inf=info(prop);
-    var t=eval('var b=new '+FUNS[inf.t].tp+'(bin)');
-    for(var i=0;i<b.length;i++) {
-        js[i]=(b[i]);
+    var dv=new DataView(bin);
+    var id=FUNS[inf.t].get;
+    if(inf.n>1) {
+        js=[];        
+        for(var i=0;i<inf.n;i++) {
+            js[i]=dv[id](i); //big endian
+            //log("___js["+i+"]"+js[i]);
+        }
     }
+    else {
+        js=dv[id](0);   //big endian
+        //log("___js:"+js);
+    }   
     
-    return (b.length>1)?js:js[0];
+    return js;
 }
 
 function bin_concat(bs,l)
@@ -300,15 +323,17 @@ function mk_conv(cov,obj)
     cov[tp].b2j=function(bin,type) {
         var b;
         var offset=0,l;
-        var js={},len=0;
+        var js={};
         var desc=CONVS[type].desc,ds;
         
-        //log(st);
-        //log(b);
-        
+        //log("tp:"+type);
         js.tp=type;
+        js.tlen=CONVS[type].tlen;
         for(var i in desc) {
+            //log("tp:"+type+"-"+i);
+            
             p=desc[i];
+            //log("tp:"+type+"  i:"+i+"  p:"+p+"  isobject:"+isObject(p));
             if(isString(p)) {
                 l=get_plen(p);
                 b=bin.slice(offset,offset+l);
@@ -316,16 +341,32 @@ function mk_conv(cov,obj)
                 offset+=l;
             }
             else if(isArray(p)) {
-                for(var j=0;j<p.length;j++) {
+                for(var j=0;k<j.length;j++) {
                     //
                 }
             }
             else if(isObject(p)) {
                 var tp=p._tp_;
-                b=bin.slice(offset,offset+l);
-                js[i]=CONVS[tp].b2j(b,tp);
                 l=CONVS[tp].tlen;
+                b=bin.slice(offset,offset+l);
+
+                js[i]=CONVS[tp].b2j(b,tp);
                 offset+=l; 
+            }
+        }
+        
+        var js2;
+        if(type==TYPE.PACK) {
+            for(var i=1;i<js.pack.length;i++) {
+                var tp=js.pack[i];
+                log("**** tp["+i+"]:"+tp+"  offset:"+offset);
+                if(tp>=0 && tp<TYPE.MAX) {
+                    var l=CONVS[tp].tlen;
+                    b=bin.slice(offset,offset+l);
+                    js[i]=CONVS[tp].b2j(b,tp);
+                    offset+=CONVS[tp].tlen;
+                }
+                
             }
         }
         
@@ -367,6 +408,7 @@ function mk_conv(cov,obj)
 var CONVS=(function() {
     var cv=[];
     
+    mk_conv(cv,pack_t);
     mk_conv(cv,hdr_t);
     mk_conv(cv,gain_t);
     mk_conv(cv,eq_t);
@@ -379,16 +421,6 @@ var CONVS=(function() {
     return cv;
 }());
 
-
-function mk_js(p)
-{
-    
-}
-
-function mk_bin(p)
-{
-    //var 
-}
 
 var DATA=(function() {
     var dt={};
@@ -425,14 +457,19 @@ var DATA=(function() {
         return a;
     }
     /////////////////////////////////
-    function _unpack(bin) {
-        return CONVS[TYPE.HDR].b2j(bin,TYPE.HDR);
+    function _getjs(hdr)
+    {
+        
+    }
+    function _unpack(bin)
+    {
+        return CONVS[TYPE.PACK].b2j(bin,TYPE.PACK);
     }
     function _onmsg(e) {
-        
+        log(e.data);
         var hdr=_unpack(e.data);
-        log(hdr);
-        log("dtype:"+hdr.dtype);
+        //log(hdr);
+        //log("dtype:"+hdr.dtype);
         switch(hdr.dtype) {
             case TYPE.GAIN:
             var g=hdr.data;
@@ -449,7 +486,7 @@ var DATA=(function() {
             {
                 //DATA.paras=o.data;
                 //ui refresh ?
-                log("TYPE.PARAS");
+                //log("TYPE.PARAS");
             }
             break;  
         }

@@ -15,13 +15,19 @@
 #define IO_WIFI (1<<8)
 
 enum {
-    TYPE_HDR=0,
+    TYPE_PACK=0,
+    TYPE_HDR,
     TYPE_GAIN,
     TYPE_EQ,
     TYPE_DYN,
+    TYPE_UPG,
     TYPE_SETUP,
     TYPE_PARAS,
+    
+    TYPE_MAX,
 };
+
+#pragma pack(1)
 
 typedef struct {
     s16 value;
@@ -30,7 +36,7 @@ typedef struct {
 typedef struct {
     u8      aa;
     u8      bb;
-    gain_t  g;
+    gain_t  gain;
 }eq_t;
 
 typedef struct {
@@ -47,11 +53,17 @@ typedef struct {
 
 typedef struct {
     u32 magic;
-    u32 pack;
+    s16 pack[4];
+    u8  data[];
+}pack_t;
+
+typedef struct {
     u32 itype;
     u32 dtype;
     u32 dlen;
     u8  data[];
 }hdr_t;
+
+#pragma pack()
 
 #endif

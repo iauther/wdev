@@ -223,15 +223,16 @@ function myAll()
     
     var st=Laya.stage;
     //var url="ws://192.168.4.1:8191"
-    var url="ws://192.168.2.108:8191"
+    var url="ws://192.168.2.103:8191"
     
     loadRes();
-    log(DATA);
+    //log(DATA);
     DATA.open(url);
     
-    Laya.timer.loop(100, this, paras_chk);
+    Laya.timer.loop(5000, this, paras_chk);
     function paras_chk()
     {
+        //log(DATA.paras);
         if(DATA.paras) {
             Laya.timer.clear(this, paras_chk);
             myInit();
