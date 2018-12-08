@@ -8,27 +8,27 @@ RW.WRITE=tmp++;
 
 tmp=0;
 var IO={};
-IO.BT=1<<tmp++;
-IO.I2C=1<<tmp++;
-IO.I2S=1<<tmp++;
-IO.SPI=1<<tmp++;
-IO.USB=1<<tmp++;
-IO.GPIO=1<<tmp++;
-IO.UART=1<<tmp++;
-IO.ETH=1<<tmp++;
-IO.WIFI=1<<tmp++;
+IO.BT=(1<<tmp++);
+IO.I2C=(1<<tmp++);
+IO.I2S=(1<<tmp++);
+IO.SPI=(1<<tmp++);
+IO.USB=(1<<tmp++);
+IO.GPIO=(1<<tmp++);
+IO.UART=(1<<tmp++);
+IO.ETH=(1<<tmp++);
+IO.WIFI=(1<<tmp++);
 
 
 /////////////////////////////////////
-var FUNS=[];
-FUNS['s8' ]={nm:'s8', tp:Int8Array,   sz:1,get:'getInt8',   set:'setInt8'   };
-FUNS['u8' ]={nm:'u8', tp:Uint8Array,  sz:1,get:'getUint8',  set:'setUint8'  };
-FUNS['s16']={nm:'s16',tp:Int16Array,  sz:2,get:'getInt16',  set:'setInt16'  };
-FUNS['u16']={nm:'u16',tp:Uint16Array, sz:2,get:'getUint16', set:'setUint16' };
-FUNS['s32']={nm:'s32',tp:Int32Array,  sz:4,get:'getInt32',  set:'setInt32'  };
-FUNS['u32']={nm:'u32',tp:Uint32Array, sz:4,get:'getUint32', set:'setUint32' };
-FUNS['f32']={nm:'f32',tp:Float32Array,sz:4,get:'getFloat32',set:'setFloat32'};
-FUNS['f64']={nm:'f64',tp:Float64Array,sz:8,get:'getFloat64',set:'setFloat64'};
+var BASE=[];
+BASE['s8' ]={nm:'s8', tp:Int8Array,   sz:1,get:'getInt8',   set:'setInt8'   };
+BASE['u8' ]={nm:'u8', tp:Uint8Array,  sz:1,get:'getUint8',  set:'setUint8'  };
+BASE['s16']={nm:'s16',tp:Int16Array,  sz:2,get:'getInt16',  set:'setInt16'  };
+BASE['u16']={nm:'u16',tp:Uint16Array, sz:2,get:'getUint16', set:'setUint16' };
+BASE['s32']={nm:'s32',tp:Int32Array,  sz:4,get:'getInt32',  set:'setInt32'  };
+BASE['u32']={nm:'u32',tp:Uint32Array, sz:4,get:'getUint32', set:'setUint32' };
+BASE['f32']={nm:'f32',tp:Float32Array,sz:4,get:'getFloat32',set:'setFloat32'};
+BASE['f64']={nm:'f64',tp:Float64Array,sz:8,get:'getFloat64',set:'setFloat64'};
 
 
 /////////////////////////////////////
@@ -148,7 +148,7 @@ function get_plen(prop)
     var s=prop.split('.');
     var l=parseInt(s[1]);
     
-    return FUNS[s[0]].sz*l;
+    return BASE[s[0]].sz*l;
 }
 
 
@@ -193,8 +193,8 @@ function _j2b(prop,js)
     var inf=info(prop);
     var bin=new ArrayBuffer(js.tlen);
     var dv=new DataView(bin);
-    var id=FUNS[inf.t].set;
-    var sz=FUNS[inf.t].sz;
+    var id=BASE[inf.t].set;
+    var sz=BASE[inf.t].sz;
     
     if(isArray(js)) {
         for(var i=0;i<js.length;i++) {
@@ -213,8 +213,8 @@ function _b2j(prop,bin)
     var js;
     var inf=info(prop);
     var dv=new DataView(bin,bin.offset);
-    var id=FUNS[inf.t].get;
-    var sz=FUNS[inf.t].sz;
+    var id=BASE[inf.t].get;
+    var sz=BASE[inf.t].sz;
     
     if(inf.n>1) {
         js=[];
@@ -230,19 +230,24 @@ function _b2j(prop,bin)
     return js;
 }
 
-function bin_concat(bs,l)
+function _bconcat(bs)
 {
     if(!bs || bs.length<=0) {
         return null;
     }
     
-    var b=new ArrayBuffer(l);
-    for(var i=0,pos=0;i<bs.length;i++) {
+    var len=0,pos=0;
+    for(var i=0;i<bs.length;i++) {
+        len += bs[i].byteLength;
+    }
+    
+    var b=new ArrayBuffer(len);
+    for(var i=0;i<bs.length;i++) {
         if(! bs[i] instanceof ArrayBuffer) {
             continue;
         }
         
-        b.set(b+pos,b[i].byteLength);
+        b.set(bs[i],pos);
         pos += b[i].byteLength;
     }
     
@@ -292,40 +297,40 @@ function mk_paras(bin)
     
 }
 
-function mk_conv(cov,obj)
+function mk_conv(fn,obj)
 {
     var i,j,p,tp=obj._tp_;
     
-    if(!cov[tp]) {
-        cov[tp]={};
-        cov[tp].desc=obj;
-        cov[tp].tlen=0;
-        cov[tp].tp=tp;
+    if(!fn[tp]) {
+        fn[tp]={};
+        fn[tp].desc=obj;
+        fn[tp].tlen=0;
+        fn[tp].tp=tp;
     }
     
     for(i in obj) {
         p=obj[i];
         if(isString(p)) {
-            cov[tp].tlen+=get_plen(p); 
+            fn[tp].tlen+=get_plen(p); 
         }
         else if(isArray(p)) {
             for(var j=0;j<p.length;j++) {
-                mk_conv(cov,p[j]);
+                mk_conv(fn,p[j]);
             }
         }
         else if(isObject(p)) {
-            mk_conv(cov,p);
+            mk_conv(fn,p);
         }
     }
     
     //bin to js
-    cov[tp].b2j=function(type,bin) {
+    fn[tp].b2j=function(type,bin) {
         var l;
         var js={};
-        var desc=CONVS[type].desc;
+        var desc=FUNC[type].desc;
         
         js.tp=type;
-        js.tlen=CONVS[type].tlen;
+        js.tlen=FUNC[type].tlen;
         for(var i in desc) {
             p=desc[i];
             if(isString(p)) {
@@ -340,7 +345,7 @@ function mk_conv(cov,obj)
             }
             else if(isObject(p)) {
                 var tp=p._tp_;
-                js[i]=CONVS[tp].b2j(tp,bin);
+                js[i]=FUNC[tp].b2j(tp,bin);
             }
         }
         
@@ -348,11 +353,11 @@ function mk_conv(cov,obj)
     };
     
     //js to bin
-    cov[tp].j2b=function(js) {
+    fn[tp].j2b=function(js) {
         
         var bin=[];
-        var desc=CONVS[js.tp].desc;
-        var tl=CONVS[js.tp].tlen;
+        var desc=FUNC[js.tp].desc;
+        var tl=FUNC[js.tp].tlen;
         
         for(var i in desc) {
             var p=js[i];
@@ -365,39 +370,71 @@ function mk_conv(cov,obj)
             }
             else if(isArray(p)) {
                 for(var j=0;j<p.length;j++) {
-                    //
+                    var q=p[j];
+                    var b=func[q.tp].j2b(q);
+                    bin.push(b);
                 }
             }
             else if(isObject(p)) {
-                var b=cov[p.tp].j2b(js[p]);
+                var b=func[p.tp].j2b(p);
                 bin.push(b);
             } 
         }
         
-        return bin_concat(bin);
+        return _bconcat(bin);
     };
     
-    return cov;
+    //constructor
+    fn[tp].create=function(type) {
+        var l;
+        var js={};
+        var desc=FUNC[type].desc;
+        
+        js.tp=type;
+        js.tlen=FUNC[type].tlen;
+        for(var i in desc) {
+            p=desc[i];
+            if(isString(p)) {
+                var l=get_plen(p);
+                if(l==1) {
+                    js[i]=null;
+                }
+                else if(l>1) {
+                    js[i]=new Array(l);
+                }
+            }
+            else if(isObject(p)) {
+                var tp=p._tp_;
+                js[i]=FUNC[tp].b2j(tp,bin);
+            }
+        }
+        
+        return js;
+    }
+    
+    return fn;
 }
-var CONVS=(function() {
-    var cv=[];
+var FUNC=(function() {
+    var fn=[];
     
-    mk_conv(cv,pack_t);
-    mk_conv(cv,hdr_t);
-    mk_conv(cv,gain_t);
-    mk_conv(cv,eq_t);
-    mk_conv(cv,setup_t);
-    mk_conv(cv,paras_t);
+    mk_conv(fn,pack_t);
+    mk_conv(fn,hdr_t);
+    mk_conv(fn,gain_t);
+    mk_conv(fn,eq_t);
+    mk_conv(fn,setup_t);
+    mk_conv(fn,paras_t);
     
-    //print_obj(cv);
+    //print_obj(fn);
     //log(cv);
     
-    return cv;
+    return fn;
 }());
 
 
 var DATA=(function() {
     var dt={};
+    
+    dt.head=null;
     dt.paras=null;
     /////////////////////
     
@@ -431,30 +468,32 @@ var DATA=(function() {
         return a;
     }
     /////////////////////////////////
-    function _getjs(hdr)
+    function _tojs(hdr)
     {
         
     }
     function _unpack(bin)
     {
-        var a,b;
+        var h,d;
         bin.offset=0;
-        var p=CONVS[TYPE.PACK].b2j(TYPE.PACK,bin);
+        var p=FUNC[TYPE.PACK].b2j(TYPE.PACK,bin);
         for(var i=0;i<p.pack.length;i++) {
             var tp=p.pack[i];
             if(tp>=0 && tp<TYPE.MAX) {
-                if(tp==TYPE.HDR) {
-                    a=CONVS[tp].b2j(tp,bin);
-                }
-                else {
-                    b=CONVS[tp].b2j(tp,bin);
+                switch(tp) {
+                    case TYPE.HDR:
+                    h=FUNC[tp].b2j(tp,bin);
+                    break;
+                    
+                    default:
+                    d=FUNC[tp].b2j(tp,bin);
+                    break;
                 }
             }
         }
-        
         bin.offset=null;
         
-        return {hdr:a,dat:b};
+        return {pk:p,hdr:h,dat:d};
         
     }
     function _onmsg(e) {
@@ -482,12 +521,36 @@ var DATA=(function() {
     }
     
     ///////////////////////////////
+    function _packet() {
+        var p=FUNC[TYPE.PACK].create(TYPE.PACK);
+        var h=FUNC[TYPE.HDR].create(TYPE.HDR);
+        return {pk:p,hdr:h};
+    }
     function _pack(js) {
-        var bin=CONVS[js.tp].j2b(js);
-        return bin;
+        var p=_packet();
+        log(p);
+        p.pk.magic=MAGIC;
+        p.pk.pack[0]=TYPE.HDR;
+        p.pk.pack[1]=js.tp;
+        p.pk.pack[2]=-1;
+        p.pk.pack[3]=-1;
+        
+        p.hdr.itype=IO.WIFI;
+        p.hdr.dtype=js.type;
+        p.hdr.dlen =js.tlen;
+        var b=[],ar=[p.pk,p.hdr,js];
+        for(var i=0,j=0;i<ar.length;i++) {
+            var tp=ar[i].tp;
+            if(tp>=0 && tp<TYPE.MAX) {
+                b[j++]=FUNC[tp].j2b(ar[i]);
+            }
+        }
+        
+        return _bconcat(b);
     }
     function _send(js) {
         var bin=_pack(js);
+        log("bytelength:"+bin.byteLength);
         dt._ws.send(bin);
     }
     

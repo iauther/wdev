@@ -72,7 +72,7 @@ function myFader(parent,area,txt,data)
     vs.skin="./res/img/fader_line.png";
     vs.min=0;
 	vs.max=100;
-	vs.value=data.value;
+	vs.value=data.gain.value;
 	vs.tick=1;
 	vs.x=(bg.width-line.width)/2;
 	vs.y=(bg.height-line.height)*vs.value/100;
@@ -82,8 +82,8 @@ function myFader(parent,area,txt,data)
     
     function onChange(v) {
         //log("clip value:"+v);
-        data.value=v;
-        //DATA.send(js);
+        data.gain.value=v;
+        DATA.send(data);
     }
     
     return sp;
@@ -229,11 +229,9 @@ function myAll()
     //log(DATA);
     DATA.open(url);
     
-    Laya.timer.loop(2000, this, paras_chk);
+    Laya.timer.loop(50, this, paras_chk);
     function paras_chk()
     {
-        log(DATA.paras);
-        log("aaaaaaaaaaaaaaa");
         if(DATA.paras) {
             Laya.timer.clear(this, paras_chk);
             myInit();
@@ -246,8 +244,8 @@ function myAll()
         //this.et = new myEdit(st,    Area(0,0,0,0), data);
         //this.ug = new myUpgrade(st, Area(0,0,0,0), data);
         
-        var fd = new myFader(st,new Area(200,200,600,400),"fader", DATA.paras.eq.gain);
-        log("myInit");
+        var fd = new myFader(st,new Area(200,200,600,400),"fader", DATA.paras.eq);
+        log("myInit 111");
     }
     
 }
