@@ -54,7 +54,7 @@ function loadRes()
     Laya.loader.load(imgs, Laya.Handler.create(this,onload));
     function onload()
     {
-        log("all loaded!");
+        //log("all loaded!");
     }
 }
 
@@ -245,7 +245,7 @@ function myAll()
         //this.ug = new myUpgrade(st, Area(0,0,0,0), data);
         
         var fd = new myFader(st,new Area(200,200,600,400),"fader", DATA.paras.eq);
-        log("myInit 111");
+        //log("myInit 111");
     }
     
 }

@@ -1,3 +1,9 @@
+/*
+    following function is reserved:
+     object array support
+     b2s,s2b functions(string_to_bin bin_to_string)
+*/
+
 var tmp=0;
 var MAGIC=0xffeebbaa
 
@@ -93,6 +99,11 @@ function log(s)
     console.log(s);
 }
 
+function isNull(o)
+{
+    return (o==='undefined' || o==='null')
+}
+
 function isNumber(o)
 {
     return ((typeof o) === 'number');
@@ -143,6 +154,14 @@ function xhr_get(url,type,sync)
 
 
 //prop:propty
+function get_pcnt(prop)
+{
+    var s=prop.split('.');
+    return parseInt(s[1]);
+}
+
+
+//prop:propty
 function get_plen(prop)
 {
     var s=prop.split('.');
@@ -188,27 +207,21 @@ function get_tlen(obj)
     return len;
 }
 
-function _j2b(prop,js)
+function _n2b(prop,js)
 {
     var inf=info(prop);
-    var bin=new ArrayBuffer(js.tlen);
-    var dv=new DataView(bin);
     var id=BASE[inf.t].set;
     var sz=BASE[inf.t].sz;
     
-    if(isArray(js)) {
-        for(var i=0;i<js.length;i++) {
-            dv[id](i*sz,js[i],true);
-        }
-    }
-    else {
-        dv[id](0,js,true);
-    }
+    var bin=new ArrayBuffer(inf.n*sz);
+    var dv=new DataView(bin);
+    
+    dv[id](0,js,true);
     
     return bin;
 }
 
-function _b2j(prop,bin)
+function _b2n(prop,bin)
 {
     var js;
     var inf=info(prop);
@@ -230,6 +243,9 @@ function _b2j(prop,bin)
     return js;
 }
 
+//IE:TypeArray.set
+//FF:TypeArray.subarray
+//CR:TypeArray.slice
 function _bconcat(bs)
 {
     if(!bs || bs.length<=0) {
@@ -241,14 +257,15 @@ function _bconcat(bs)
         len += bs[i].byteLength;
     }
     
-    var b=new ArrayBuffer(len);
+    var b=new Uint8Array(len);
     for(var i=0;i<bs.length;i++) {
         if(! bs[i] instanceof ArrayBuffer) {
             continue;
         }
         
-        b.set(bs[i],pos);
-        pos += b[i].byteLength;
+        var a=new Uint8Array(bs[i]);
+        b.set(a,pos);
+        pos+=b[i].byteLength;
     }
     
     return b;
@@ -303,7 +320,7 @@ function mk_conv(fn,obj)
     
     if(!fn[tp]) {
         fn[tp]={};
-        fn[tp].desc=obj;
+        fn[tp].des=obj;
         fn[tp].tlen=0;
         fn[tp].tp=tp;
     }
@@ -327,15 +344,15 @@ function mk_conv(fn,obj)
     fn[tp].b2j=function(type,bin) {
         var l;
         var js={};
-        var desc=FUNC[type].desc;
+        var des=FUNC[type].des;
         
         js.tp=type;
         js.tlen=FUNC[type].tlen;
-        for(var i in desc) {
-            p=desc[i];
+        for(var i in des) {
+            p=des[i];
             if(isString(p)) {
                 l=get_plen(p);
-                js[i]=_b2j(p,bin);
+                js[i]=_b2n(p,bin);
                 bin.offset+=l;
             }
             else if(isArray(p)) {
@@ -356,13 +373,16 @@ function mk_conv(fn,obj)
     fn[tp].j2b=function(js) {
         
         var bin=[];
-        var desc=FUNC[js.tp].desc;
+        var des=FUNC[js.tp].des;
         var tl=FUNC[js.tp].tlen;
         
-        for(var i in desc) {
-            var p=js[i];
+        for(var i in des) {
+            var b,p=js[i];
+            
+            if(isNull(p)) continue;
+            
             if(isNumber(p)) {
-                var b=_j2b(p,js[p]);
+                b=_n2b(des[i],p);
                 bin.push(b);
             }
             else if(isString(p)) {
@@ -371,36 +391,53 @@ function mk_conv(fn,obj)
             else if(isArray(p)) {
                 for(var j=0;j<p.length;j++) {
                     var q=p[j];
-                    var b=func[q.tp].j2b(q);
-                    bin.push(b);
+                    if(isNull(q)) continue;
+                    
+                    if(isNumber(q)) {
+                        b=_n2b(des[i],q);
+                        bin.push(b);
+                        break;                  //don't support different data in array
+                    }
+                    else if(isString(q)) {
+                        //reserved
+                        continue;
+                        //break;                //don't support different data in array
+                    }
+                    else if(isObject(q)) {
+                        b=FUNC[q.tp].j2b(q);    //do support different object in array
+                    }
                 }
             }
             else if(isObject(p)) {
-                var b=func[p.tp].j2b(p);
+                b=FUNC[p.tp].j2b(p);
                 bin.push(b);
-            } 
+            }
         }
         
         return _bconcat(bin);
     };
     
-    //constructor
+    //cr
     fn[tp].create=function(type) {
         var l;
         var js={};
-        var desc=FUNC[type].desc;
+        var des=FUNC[type].des;
         
         js.tp=type;
         js.tlen=FUNC[type].tlen;
-        for(var i in desc) {
-            p=desc[i];
+        for(var i in des) {
+            p=des[i];
             if(isString(p)) {
-                var l=get_plen(p);
-                if(l==1) {
-                    js[i]=null;
+                var n=get_pcnt(p);
+                if(n==1) {
+                    js[i]=0;
                 }
-                else if(l>1) {
-                    js[i]=new Array(l);
+                else if(n>1) {
+                    var a=new Array(n);
+                    for(var j=0;j<n;j++) {
+                        a[j]=0;
+                    }
+                    js[i]=a;
                 }
             }
             else if(isObject(p)) {
@@ -425,7 +462,7 @@ var FUNC=(function() {
     mk_conv(fn,paras_t);
     
     //print_obj(fn);
-    //log(cv);
+    //log(fn);
     
     return fn;
 }());
@@ -521,14 +558,14 @@ var DATA=(function() {
     }
     
     ///////////////////////////////
-    function _packet() {
+    function _mkpkt() {
         var p=FUNC[TYPE.PACK].create(TYPE.PACK);
         var h=FUNC[TYPE.HDR].create(TYPE.HDR);
+        
         return {pk:p,hdr:h};
     }
     function _pack(js) {
-        var p=_packet();
-        log(p);
+        var p=_mkpkt();
         p.pk.magic=MAGIC;
         p.pk.pack[0]=TYPE.HDR;
         p.pk.pack[1]=js.tp;
@@ -536,13 +573,15 @@ var DATA=(function() {
         p.pk.pack[3]=-1;
         
         p.hdr.itype=IO.WIFI;
-        p.hdr.dtype=js.type;
+        p.hdr.dtype=js.tp;
         p.hdr.dlen =js.tlen;
         var b=[],ar=[p.pk,p.hdr,js];
         for(var i=0,j=0;i<ar.length;i++) {
             var tp=ar[i].tp;
             if(tp>=0 && tp<TYPE.MAX) {
-                b[j++]=FUNC[tp].j2b(ar[i]);
+                b[j]=FUNC[tp].j2b(ar[i]);
+                //log(j+":"+b[j].byteLength);
+                j++;
             }
         }
         
@@ -550,7 +589,7 @@ var DATA=(function() {
     }
     function _send(js) {
         var bin=_pack(js);
-        log("bytelength:"+bin.byteLength);
+        //log("bytelength:"+bin.byteLength);
         dt._ws.send(bin);
     }
     
