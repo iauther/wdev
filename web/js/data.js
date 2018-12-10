@@ -243,9 +243,6 @@ function _b2n(prop,bin)
     return js;
 }
 
-//IE:TypeArray.set
-//FF:TypeArray.subarray
-//CR:TypeArray.slice
 function _bconcat(bs)
 {
     if(!bs || bs.length<=0) {
@@ -314,7 +311,7 @@ function mk_paras(bin)
     
 }
 
-function mk_conv(fn,obj)
+function mk_fn(fn,obj)
 {
     var i,j,p,tp=obj._tp_;
     
@@ -332,11 +329,11 @@ function mk_conv(fn,obj)
         }
         else if(isArray(p)) {
             for(var j=0;j<p.length;j++) {
-                mk_conv(fn,p[j]);
+                mk_fn(fn,p[j]);
             }
         }
         else if(isObject(p)) {
-            mk_conv(fn,p);
+            mk_fn(fn,p);
         }
     }
     
@@ -454,12 +451,12 @@ function mk_conv(fn,obj)
 var FUNC=(function() {
     var fn=[];
     
-    mk_conv(fn,pack_t);
-    mk_conv(fn,hdr_t);
-    mk_conv(fn,gain_t);
-    mk_conv(fn,eq_t);
-    mk_conv(fn,setup_t);
-    mk_conv(fn,paras_t);
+    mk_fn(fn,pack_t);
+    mk_fn(fn,hdr_t);
+    mk_fn(fn,gain_t);
+    mk_fn(fn,eq_t);
+    mk_fn(fn,setup_t);
+    mk_fn(fn,paras_t);
     
     //print_obj(fn);
     //log(fn);
@@ -531,7 +528,6 @@ var DATA=(function() {
         bin.offset=null;
         
         return {pk:p,hdr:h,dat:d};
-        
     }
     function _onmsg(e) {
         //log(e.data);
