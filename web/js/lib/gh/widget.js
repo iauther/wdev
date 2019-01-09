@@ -42,8 +42,6 @@ function tStyle(font,size,width,color,bold)
 }
 
 
-
-
 var Widget=(function() {
     var _proto=Widget.prototype;
     

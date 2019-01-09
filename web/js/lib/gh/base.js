@@ -192,6 +192,12 @@ var View=function()
         vi.enabled=flag;
     }
     
+    vi.paint=function() {
+        for(var i=0;i<vi.childs.length;i++) {
+            vi.childs[i].paint();
+        }
+    }
+    
     vi.clear=function() {
         for(var i=0;i<vi.childs.length;i++) {
             vi.childs[i].clear();
@@ -209,55 +215,70 @@ var View=function()
         return Area(x,y,w,h);
     }
     
-    vi.paint=function() {
-        for(var i=0;i<vi.childs.length;i++) {
-            vi.childs[i].paint();
-        }
-    }
-    
     return vi;
 }
 
 var Text=function(ratio,text,style)
 {
-    var tx={};
+    var txt={};
     
-    View.call(tx);
+    txt.style=style;
+    txt.text=text;
     
-    tx.style=style;
-    tx.text=text;
-    
-    tx.paint=function() {
+    txt.paint=function() {
         
     }
     
-    tx.resize=function()
+    txt.clear=function() {
+        
+    }
+    
+    txt.resize=function()
     {
-        tx
-    }
-    
-    tx.clear=function() {
         
     }
     
-    return tx;
+    return txt;
 }
 
 var Image=function()
 {
-    var im={};
+    var img={};
     
-    View.call(im);
+    img.paint=function() {
+        
+    }
     
-    return im;
+    img.clear=function() {
+        
+    }
+    
+    img.resize=function()
+    {
+        
+    }
+    
+    return img;
 }
 
 var Graph=function()
 {
-    var gr={};
-    View.call(gr);
+    var grp={};
     
-    return gr;
+    grp.paint=function() {
+        
+    }
+    
+    grp.clear=function() {
+        
+    }
+    
+    grp.resize=function()
+    {
+        
+    }
+    
+    return grp;
 }
 
 
