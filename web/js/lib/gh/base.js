@@ -170,52 +170,51 @@ var Emitter=function() {
 
 var View=function()
 {
-    var vi={};
+    var vw={};
     
-    vi.parent=null;
-    vi.ratio=null;
-    vi.area=null;
-    vi.childs=[];
-    vi.enabled=true;
+    vw.parent=null;
+    vw.ratio=null;
+    vw.area=null;
+    vw.childs=[];
+    vw.enabled=true;
     
-    vi.addChild=function(obj) {
+    vw.addChild=function(obj) {
         obj.parent=vi;
-        vi.childs.push(obj);
+        vw.childs.push(obj);
     }
     
-    vi.rmChild=function(obj) {
+    vw.rmChild=function(obj) {
         obj.parent=null;
-        vi.childs.pop(obj);
+        vw.childs.pop(obj);
     }
     
-    vi.enable=function(flag) {
-        vi.enabled=flag;
+    vw.enable=function(flag) {
+        vw.enabled=flag;
     }
     
-    vi.paint=function() {
+    vw.paint=function() {
         for(var i=0;i<vi.childs.length;i++) {
             vi.childs[i].paint();
         }
     }
     
-    vi.clear=function() {
-        for(var i=0;i<vi.childs.length;i++) {
-            vi.childs[i].clear();
+    vw.clear=function() {
+        for(var i=0;i<vw.childs.length;i++) {
+            vw.childs[i].clear();
         }
     }
     
-    vi.resize=function() {
+    vw.resize=function() {
         
-        vi.area=ratio_to_area(vi,);
-        for(var i=0;i<vi.childs.length;i++) {
-            vi.childs[i].resize(w,h);
+        vw.area=ratio_to_area(vi,);
+        for(var i=0;i<vw.childs.length;i++) {
+            vw.childs[i].resize(w,h);
         }
-
         
         return Area(x,y,w,h);
     }
     
-    return vi;
+    return vw;
 }
 
 var Text=function(ratio,text,style)
@@ -226,7 +225,12 @@ var Text=function(ratio,text,style)
     txt.text=text;
     
     txt.paint=function() {
-        
+        //ctx.font = "bold 40px '字体','字体','微软雅黑','宋体'";
+        //ctx.fillStyle = '#09f955';
+        //ctx.strokeStyle = '#980fff';
+        //ctx.textBaseline = 'hanging'; top(顶部对齐) hanging（悬挂） middle（中间对齐） bottom（底部对齐） alphabetic(默认值)是
+        //ctx.fillText (text, x,y,[maxwidth]);
+        //ctx.strokeText (text, x,y,[maxwidth]);
     }
     
     txt.clear=function() {
@@ -246,7 +250,7 @@ var Image=function()
     var img={};
     
     img.paint=function() {
-        
+        //context.drawImage(image,x,y);
     }
     
     img.clear=function() {
@@ -266,7 +270,11 @@ var Graph=function()
     var grp={};
     
     grp.paint=function() {
-        
+        //ctx.lineWidth=10;
+        //ctx.strokeStyle="blue";
+        //ctx.moveTo(0,0);
+        //ctx.lineTo(800,600);
+        //ctx.stroke();
     }
     
     grp.clear=function() {
